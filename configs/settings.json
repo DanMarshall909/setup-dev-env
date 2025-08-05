@@ -125,5 +125,15 @@
     "console": true,
     "max_files": 10,
     "rotate_after_days": 7
+  },
+  "dry_run": {
+    "enabled": false,
+    "show_commands": true,
+    "show_file_changes": true,
+    "show_network_calls": true,
+    "simulate_downloads": false,
+    "show_dependencies": true,
+    "estimate_resources": true,
+    "comment": "Dry-run mode shows what would be executed without making changes"
   }
 }

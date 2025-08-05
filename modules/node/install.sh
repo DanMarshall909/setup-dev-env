@@ -34,6 +34,13 @@ install_nodejs() {
         return 0
     fi
     
+    if is_dry_run; then
+        print_would_execute "curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -"
+        print_would_install "nodejs" "Node.js"
+        print_would_execute "node --version && npm --version"
+        return 0
+    fi
+    
     # Install Node.js 18.x LTS from NodeSource
     print_status "Adding NodeSource repository..."
     curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
@@ -53,6 +60,19 @@ install_typescript_tools() {
     # Read global packages from module config
     local module_config="$SCRIPT_DIR/module.json"
     local packages=$(jq -r '.global_packages[]' "$module_config" 2>/dev/null)
+    
+    if is_dry_run; then
+        if [ -n "$packages" ]; then
+            while IFS= read -r package; do
+                if [ -n "$package" ]; then
+                    print_would_execute "npm install -g $package"
+                fi
+            done <<< "$packages"
+        else
+            print_would_execute "npm install -g typescript ts-node nodemon prettier eslint @types/node"
+        fi
+        return 0
+    fi
     
     if [ -n "$packages" ]; then
         # Install packages one by one for better error handling
@@ -78,6 +98,17 @@ install_typescript_tools() {
 configure_npm() {
     print_status "Configuring npm..."
     
+    if is_dry_run; then
+        local author_name="$(git config --global user.name 2>/dev/null || echo 'Developer')"
+        local author_email="$(git config --global user.email 2>/dev/null || echo 'dev@example.com')"
+        print_would_configure "npm" "init-author-name=$author_name"
+        print_would_configure "npm" "init-author-email=$author_email"
+        print_would_configure "npm" "init-license=MIT"
+        print_would_configure "npm" "save-exact=true"
+        print_would_configure "npm" "authentication token (if available)"
+        return 0
+    fi
+    
     # Set npm defaults
     npm config set init-author-name "$(git config --global user.name 2>/dev/null || echo 'Developer')"
     npm config set init-author-email "$(git config --global user.email 2>/dev/null || echo 'dev@example.com')"
@@ -91,6 +122,11 @@ configure_npm() {
 }
 
 configure_npm_auth() {
+    if is_dry_run; then
+        print_would_configure "npm" "authentication token from password manager"
+        return 0
+    fi
+    
     # Try to get npm token from password manager
     local secret_config=$(get_setting '.security.secrets.npm_token')
     local secret_path=$(echo "$secret_config" | jq -r '.path')
@@ -111,6 +147,15 @@ configure_npm_auth() {
 
 verify_nodejs_installation() {
     print_status "Verifying Node.js installation..."
+    
+    if is_dry_run; then
+        print_would_execute "node --version"
+        print_would_execute "npm --version"
+        print_would_execute "tsc --version"
+        print_would_execute "npm ping"
+        print_success "DRY RUN: All verification checks would be performed"
+        return 0
+    fi
     
     # Test Node.js
     if command_exists node; then

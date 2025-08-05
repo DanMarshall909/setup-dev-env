@@ -161,8 +161,14 @@ _resolve_deps_recursive() {
 install_module() {
     local module_name=$1
     local force=${2:-false}
+    local dry_run=${3:-false}
     
-    log_function_start "install_module" "$module_name" "$force"
+    # Set global DRY_RUN if requested
+    if [[ "$dry_run" == "true" ]]; then
+        export DRY_RUN=true
+    fi
+    
+    log_function_start "install_module" "$module_name" "$force" "$dry_run"
     
     if ! module_exists "$module_name"; then
         print_error "Module not found: $module_name"
@@ -178,7 +184,14 @@ install_module() {
         return 0
     fi
     
-    print_status "Installing module: $module_name"
+    # Show dry-run header if in dry-run mode
+    print_dry_run_header
+    
+    if is_dry_run; then
+        print_status "DRY RUN: Planning installation of module: $module_name"
+    else
+        print_status "Installing module: $module_name"
+    fi
     log_info "Starting installation of module: $module_name"
     
     # Resolve dependencies
@@ -193,24 +206,41 @@ install_module() {
     local total_modules=$(echo "$install_order" | wc -l)
     local current=0
     
+    if is_dry_run; then
+        echo -e "${BLUE}Installation order (dry-run):${NC}"
+        echo "$install_order" | sed 's/^/  /'
+        echo ""
+    fi
+    
     while IFS= read -r module; do
         current=$((current + 1))
         
         if [ "${INSTALLED_MODULES[$module]}" = "true" ]; then
-            print_status "[$current/$total_modules] Skipping $module (already installed)"
+            if is_dry_run; then
+                print_status "[$current/$total_modules] Would skip $module (already installed)"
+            else
+                print_status "[$current/$total_modules] Skipping $module (already installed)"
+            fi
             continue
         fi
         
-        print_status "[$current/$total_modules] Installing $module..."
-        
-        if install_single_module "$module"; then
+        if is_dry_run; then
+            print_status "[$current/$total_modules] Would install $module..."
+            print_would_execute "install_single_module $module"
             INSTALLED_MODULES[$module]="true"
-            print_success "[$current/$total_modules] Module '$module' installed successfully"
-            log_info "Module installed successfully: $module"
+            print_success "[$current/$total_modules] Module '$module' would be installed successfully"
         else
-            print_error "[$current/$total_modules] Failed to install module: $module"
-            log_error "Failed to install module: $module"
-            return 1
+            print_status "[$current/$total_modules] Installing $module..."
+            
+            if install_single_module "$module"; then
+                INSTALLED_MODULES[$module]="true"
+                print_success "[$current/$total_modules] Module '$module' installed successfully"
+                log_info "Module installed successfully: $module"
+            else
+                print_error "[$current/$total_modules] Failed to install module: $module"
+                log_error "Failed to install module: $module"
+                return 1
+            fi
         fi
     done <<< "$install_order"
     
@@ -369,14 +399,21 @@ main() {
             ;;
         "install")
             if [ -z "$2" ]; then
-                print_error "Usage: $0 install <module_name> [--force]"
+                print_error "Usage: $0 install <module_name> [--force] [--dry-run]"
                 exit 1
             fi
             local force=false
-            if [ "$3" = "--force" ]; then
-                force=true
-            fi
-            install_module "$2" "$force"
+            local dry_run=false
+            
+            # Parse flags
+            for arg in "$@"; do
+                case "$arg" in
+                    "--force"|"-f") force=true ;;
+                    "--dry-run"|"-d") dry_run=true ;;
+                esac
+            done
+            
+            install_module "$2" "$force" "$dry_run"
             ;;
         "available")
             list_modules
@@ -387,12 +424,14 @@ main() {
             echo "Usage: $0 <command> [arguments]"
             echo ""
             echo "Commands:"
-            echo "  list                    List all modules with installation status"
-            echo "  available               List available module names only"
-            echo "  info <module>           Show detailed information about a module"
-            echo "  tree <module>           Show dependency tree for a module"
-            echo "  install <module>        Install a module and its dependencies"
-            echo "  install <module> --force Force reinstall even if already installed"
+            echo "  list                         List all modules with installation status"
+            echo "  available                    List available module names only"
+            echo "  info <module>                Show detailed information about a module"
+            echo "  tree <module>                Show dependency tree for a module"
+            echo "  install <module>             Install a module and its dependencies"
+            echo "  install <module> --force     Force reinstall even if already installed"
+            echo "  install <module> --dry-run   Show what would be installed without changes"
+            echo "  install <module> --force --dry-run  Combine force and dry-run modes"
             ;;
     esac
 }

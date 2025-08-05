@@ -124,6 +124,12 @@ check_ubuntu() {
 update_repositories() {
     print_status "$(get_message 'updating_repos')"
     local package_manager=$(get_setting '.system.package_manager')
+    
+    if is_dry_run; then
+        print_would_execute "sudo $package_manager update"
+        return 0
+    fi
+    
     sudo $package_manager update
 }
 
@@ -134,6 +140,15 @@ install_package() {
     local package_manager=$(get_setting '.system.package_manager')
     
     log_function_start "install_package" "$package" "$package_name"
+    
+    if is_dry_run; then
+        # In dry-run mode, simulate the check and installation
+        print_would_install "$package" "$package_name"
+        print_would_execute "sudo $package_manager install -y $package"
+        log_package_operation "dry-run" "$package" "simulated"
+        log_function_end "install_package" 0
+        return 0
+    fi
     
     if dpkg -l | grep -q "^ii  $package "; then
         print_warning "$(get_message 'already_installed' "$package_name")"
@@ -165,4 +180,43 @@ get_package_info() {
 # Get the directory where the script is located
 get_script_dir() {
     echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+}
+
+# Dry-run functionality
+is_dry_run() {
+    [[ "${DRY_RUN:-false}" == "true" ]]
+}
+
+# Print dry-run status messages
+print_dry_run_header() {
+    if is_dry_run; then
+        echo -e "${YELLOW}=== DRY RUN MODE - No changes will be made ===${NC}"
+        echo ""
+    fi
+}
+
+print_would_execute() {
+    local message="$1"
+    if is_dry_run; then
+        echo -e "${BLUE}[DRY RUN]${NC} Would execute: $message"
+        log_info "[DRY RUN] Would execute: $message"
+    fi
+}
+
+print_would_install() {
+    local package="$1"
+    local description="${2:-$package}"
+    if is_dry_run; then
+        echo -e "${BLUE}[DRY RUN]${NC} Would install: $description"
+        log_info "[DRY RUN] Would install: $description"
+    fi
+}
+
+print_would_configure() {
+    local component="$1"
+    local details="$2"
+    if is_dry_run; then
+        echo -e "${BLUE}[DRY RUN]${NC} Would configure: $component${details:+ - $details}"
+        log_info "[DRY RUN] Would configure: $component${details:+ - $details}"
+    fi
 }

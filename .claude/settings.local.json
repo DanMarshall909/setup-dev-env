@@ -5,7 +5,8 @@
       "Bash(chmod:*)",
       "Bash(./setup.sh:*)",
       "Bash(bash:*)",
-      "Bash(./scripts/module-manager.sh tree:*)"
+      "Bash(./scripts/module-manager.sh tree:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

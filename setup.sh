@@ -18,6 +18,10 @@ init_logging
 # Main interactive setup
 interactive_setup() {
     log_script_start "setup.sh (interactive)"
+    
+    # Show dry-run header if in dry-run mode
+    print_dry_run_header
+    
     print_status "Linux Development Environment Setup"
     print_status "Module-based installation with dependency management"
     
@@ -40,7 +44,7 @@ interactive_setup() {
                 echo ""
                 read -p "Enter module name to install: " module_name
                 if [ -n "$module_name" ]; then
-                    install_module "$module_name"
+                    install_module "$module_name" false "$DRY_RUN"
                 fi
                 ;;
             "info"|"?")
@@ -68,7 +72,7 @@ interactive_setup() {
             *)
                 # Try to install as module name directly
                 if module_exists "$choice"; then
-                    install_module "$choice"
+                    install_module "$choice" false "$DRY_RUN"
                 else
                     print_error "Unknown option or module: $choice"
                 fi
@@ -108,17 +112,34 @@ show_interactive_menu() {
 
 # Install all available modules
 install_all_modules() {
-    print_status "Installing all modules..."
+    if is_dry_run; then
+        print_status "DRY RUN: Planning installation of all modules..."
+    else
+        print_status "Installing all modules..."
+    fi
     
     local modules=$(list_modules)
     local failed_modules=()
     
     for module in $modules; do
-        print_status "Installing module: $module"
-        if install_module "$module"; then
-            print_success "Module '$module' installed successfully"
+        if is_dry_run; then
+            print_status "Would install module: $module"
         else
-            print_error "Failed to install module: $module"
+            print_status "Installing module: $module"
+        fi
+        
+        if install_module "$module" false "$DRY_RUN"; then
+            if is_dry_run; then
+                print_success "Module '$module' would be installed successfully"
+            else
+                print_success "Module '$module' installed successfully"
+            fi
+        else
+            if is_dry_run; then
+                print_error "Would fail to install module: $module"
+            else
+                print_error "Failed to install module: $module"
+            fi
             failed_modules+=("$module")
         fi
         echo ""
@@ -133,6 +154,14 @@ install_all_modules() {
 
 # Main function
 main() {
+    # Parse global flags first
+    export DRY_RUN=false
+    for arg in "$@"; do
+        case "$arg" in
+            "--dry-run"|"-d") export DRY_RUN=true ;;
+        esac
+    done
+    
     # Parse command line arguments
     case "${1:-}" in
         # Module management commands
@@ -171,13 +200,20 @@ main() {
             local module_name="$1"
             local force=false
             
-            if [ "$2" = "--force" ] || [ "$2" = "-f" ]; then
-                force=true
-            fi
+            # Parse flags for this module
+            for arg in "$@"; do
+                case "$arg" in
+                    "--force"|"-f") force=true ;;
+                esac
+            done
             
             if module_exists "$module_name"; then
-                print_status "Installing module: $module_name"
-                install_module "$module_name" "$force"
+                if is_dry_run; then
+                    print_status "DRY RUN: Planning installation of module: $module_name"
+                else
+                    print_status "Installing module: $module_name"
+                fi
+                install_module "$module_name" "$force" "$DRY_RUN"
             else
                 print_error "Unknown module: $module_name"
                 echo ""
@@ -205,18 +241,29 @@ Commands:
     help                    Show this help message
 
 Module Installation:
-    $0 <module_name>        Install a specific module and its dependencies
-    $0 <module_name> --force Force reinstall even if already installed
+    $0 <module_name>                    Install a specific module and its dependencies
+    $0 <module_name> --force            Force reinstall even if already installed
+    $0 <module_name> --dry-run          Show what would be installed without changes
+    $0 <module_name> --force --dry-run  Combine force and dry-run modes
+
+Global Options:
+    --dry-run, -d           Enable dry-run mode for any command
+    --force, -f             Force operations (context dependent)
 
 Interactive Mode:
     $0                      Run interactive setup (no arguments)
+    $0 --dry-run            Run interactive setup in dry-run mode
 
 Examples:
     $0                      # Interactive mode
+    $0 --dry-run            # Interactive mode with dry-run
     $0 list                 # Show all modules
     $0 git                  # Install git module
+    $0 git --dry-run        # Show what git installation would do
     $0 claude               # Install claude module (will install node dependency)
+    $0 claude --dry-run     # Show claude installation plan
     $0 rider --force        # Force reinstall rider module
+    $0 all --dry-run        # Show what full installation would do
     $0 tree claude          # Show claude module dependencies
 
 Available Modules:

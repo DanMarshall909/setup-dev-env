@@ -2,9 +2,10 @@
 
 # Git module installation script
 
-# Source common functions
+# Source common functions and module framework
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "$SCRIPT_DIR/../../scripts/common.sh"
+source "$SCRIPT_DIR/../../scripts/module-framework.sh"
 
 install_git_module() {
     print_status "Installing Git module..."
@@ -90,14 +91,8 @@ install_github_cli() {
         local apt_source=$(get_setting '.repositories.github_cli.apt_source')
         local apt_list_file=$(get_setting '.repositories.github_cli.apt_list_file')
         
-        # Add GitHub CLI repository
-        print_status "$(get_message 'adding_repo')"
-        curl -fsSL "$keyring_url" | sudo dd of="$keyring_path"
-        sudo chmod go+r "$keyring_path"
-        echo "$apt_source" | sudo tee "$apt_list_file" > /dev/null
-        
-        # Update and install
-        update_repositories
+        # Add GitHub CLI repository using framework function
+        add_apt_repository "$keyring_url" "deb [arch=\$(dpkg --print-architecture) signed-by=$keyring_path] https://cli.github.com/packages stable main" "$apt_list_file" "GitHub CLI"
         install_package "$gh_package" "$gh_display"
         
         print_success "$(get_message 'installed_successfully' "$gh_display")"

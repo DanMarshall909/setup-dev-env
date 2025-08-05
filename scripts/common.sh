@@ -88,6 +88,15 @@ print_error() {
     local message="$1"
     echo -e "${RED}${prefix}${NC} $message"
     log_error "$message"
+    
+    # Pause on first error for debugging
+    if [ "${PAUSE_ON_ERROR:-true}" = "true" ]; then
+        echo ""
+        echo -e "${YELLOW}[DEBUG]${NC} Error encountered. Pausing for investigation..."
+        echo -e "${YELLOW}[DEBUG]${NC} Error details: $message"
+        echo -e "${YELLOW}[DEBUG]${NC} Press Enter to continue or Ctrl+C to abort..."
+        read -p ""
+    fi
 }
 
 print_warning() {
@@ -130,7 +139,34 @@ update_repositories() {
         return 0
     fi
     
-    sudo $package_manager update
+    # Capture output for error analysis
+    local update_output
+    if update_output=$(sudo $package_manager update 2>&1); then
+        print_success "Package repositories updated successfully"
+        return 0
+    else
+        print_error "Failed to update package repositories"
+        echo ""
+        echo -e "${YELLOW}[DEBUG]${NC} APT update output:"
+        echo "$update_output"
+        echo ""
+        
+        # Check for specific malformed entry errors
+        if echo "$update_output" | grep -q "Malformed entry.*in list file"; then
+            local malformed_file=$(echo "$update_output" | grep -o "/etc/apt/sources.list.d/[^[:space:]]*\.list" | head -1)
+            if [ -n "$malformed_file" ]; then
+                print_error "Malformed repository file detected: $malformed_file"
+                echo -e "${YELLOW}[DEBUG]${NC} Contents of $malformed_file:"
+                if [ -f "$malformed_file" ]; then
+                    sudo cat "$malformed_file" | head -5
+                else
+                    echo "File not found"
+                fi
+                echo ""
+            fi
+        fi
+        return 1
+    fi
 }
 
 # Install a package if not already installed

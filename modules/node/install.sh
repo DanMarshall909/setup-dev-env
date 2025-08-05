@@ -13,11 +13,11 @@ install_node_module() {
     # Install Node.js using NodeSource repository for latest LTS
     install_nodejs
     
+    # Configure npm (must be done before installing global packages)
+    configure_npm
+    
     # Install global TypeScript tools
     install_typescript_tools
-    
-    # Configure npm
-    configure_npm
     
     # Verify installation
     verify_nodejs_installation
@@ -73,9 +73,6 @@ install_typescript_tools() {
         fi
         return 0
     fi
-    
-    # Ensure npm global bin is in PATH for installation
-    export PATH=~/.npm-global/bin:$PATH
     
     if [ -n "$packages" ]; then
         # Install packages one by one for better error handling

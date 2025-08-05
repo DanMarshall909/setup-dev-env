@@ -78,11 +78,12 @@ install_claude_code_cli() {
         return 0
     fi
     
+    # Ensure directories exist and PATH is set
+    mkdir -p ~/.local/bin
+    export PATH=~/.npm-global/bin:~/.local/bin:$PATH
+    
     # Install via npm with proper PATH
     print_status "Installing Claude Code CLI via npm..."
-    
-    # Ensure npm global bin is in PATH
-    export PATH=~/.npm-global/bin:$PATH
     
     if npm install -g @anthropic/claude-code; then
         print_success "Claude Code CLI installed successfully"
@@ -98,7 +99,7 @@ install_claude_code_cli() {
         
         # Try alternative installation method
         print_status "Trying alternative installation method..."
-        if npx @anthropic/claude-code --version &>/dev/null; then
+        if timeout 30 npx @anthropic/claude-code --version &>/dev/null; then
             print_success "Claude Code available via npx"
             # Create wrapper script
             cat > ~/.local/bin/claude-code << 'EOF'
@@ -108,6 +109,8 @@ EOF
             chmod +x ~/.local/bin/claude-code
             print_success "Created claude-code wrapper script"
         else
+            print_warning "npx method also failed - Claude Code CLI not available"
+            print_status "You can install manually with: npm install -g @anthropic/claude-code"
             return 1
         fi
     fi

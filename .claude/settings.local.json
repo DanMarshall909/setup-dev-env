@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(./setup.sh:*)",
+      "Bash(bash:*)",
+      "Bash(./scripts/module-manager.sh tree:*)"
+    ],
+    "deny": []
+  }
+}

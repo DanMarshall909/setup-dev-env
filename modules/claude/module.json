@@ -1,0 +1,63 @@
+{
+  "name": "claude",
+  "description": "Claude Code CLI - AI-powered development assistant",
+  "version": "1.0.0",
+  "category": "ai-tools",
+  "tags": ["claude", "ai", "cli", "anthropic", "development"],
+  "dependencies": ["node"],
+  "conflicts": [],
+  "provides": ["claude-code"],
+  "platforms": ["ubuntu", "debian", "macos", "windows"],
+  "min_os_version": "18.04",
+  "check_installed": "command -v claude-code >/dev/null || npm list -g @anthropic/claude-code >/dev/null 2>&1",
+  "get_version": "claude-code --version 2>/dev/null || npm list -g @anthropic/claude-code | grep @anthropic/claude-code",
+  "size_estimate": "100MB",
+  "install_time_estimate": "2-3 minutes",
+  "post_install_actions": [
+    "Configure API key",
+    "Set up workspace preferences",
+    "Initialize project settings"
+  ],
+  "documentation": {
+    "homepage": "https://claude.ai/code",
+    "docs": "https://docs.anthropic.com/en/docs/claude-code",
+    "config_files": [
+      "~/.claude/config.json",
+      "~/.claude/credentials.json"
+    ]
+  },
+  "secrets": [
+    {
+      "name": "anthropic_api_key",
+      "description": "Anthropic API Key for Claude Code",
+      "required": true,
+      "env_var": "ANTHROPIC_API_KEY"
+    }
+  ],
+  "features": [
+    "Code generation and completion",
+    "Project analysis and refactoring", 
+    "Documentation generation",
+    "Error diagnosis and debugging",
+    "Code review and suggestions"
+  ],
+  "prerequisites": [
+    {
+      "name": "Node.js",
+      "version": ">=18.0.0",
+      "reason": "Required for Claude Code CLI runtime"
+    }
+  ],
+  "health_checks": [
+    {
+      "name": "claude_code_available",
+      "command": "claude-code --version",
+      "expected_pattern": "claude-code v[0-9]+\\.[0-9]+\\.[0-9]+"
+    },
+    {
+      "name": "api_key_configured",
+      "command": "claude-code auth status",
+      "expected_output": "Authenticated"
+    }
+  ]
+}

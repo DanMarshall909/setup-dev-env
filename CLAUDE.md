@@ -1,0 +1,1 @@
+- all settings should be in the ./config folder in a json file so that you can set it up how you like

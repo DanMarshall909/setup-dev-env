@@ -1,0 +1,58 @@
+{
+  "name": "node",
+  "description": "Node.js runtime and npm package manager with TypeScript support",
+  "version": "1.0.0",
+  "category": "runtime",
+  "tags": ["nodejs", "npm", "javascript", "typescript", "runtime"],
+  "dependencies": ["git"],
+  "conflicts": [],
+  "provides": ["node", "npm", "npx", "typescript", "ts-node"],
+  "platforms": ["ubuntu", "debian"],
+  "min_os_version": "18.04",
+  "check_installed": "command -v node >/dev/null && command -v npm >/dev/null && command -v tsc >/dev/null",
+  "get_version": "node --version && npm --version && tsc --version 2>/dev/null || echo 'TypeScript not installed'",
+  "size_estimate": "200MB",
+  "install_time_estimate": "3-5 minutes",
+  "recommended_version": "18.x LTS",
+  "post_install_actions": [
+    "Configure npm registry",
+    "Install global TypeScript tools",
+    "Set up package.json defaults"
+  ],
+  "global_packages": [
+    "typescript",
+    "ts-node",
+    "nodemon",
+    "prettier",
+    "eslint",
+    "@types/node"
+  ],
+  "documentation": {
+    "homepage": "https://nodejs.org/",
+    "docs": "https://docs.npmjs.com/",
+    "config_files": [
+      "~/.npmrc",
+      "~/.nvm/"
+    ]
+  },
+  "secrets": [
+    {
+      "name": "npm_token",
+      "description": "npm Access Token for private packages",
+      "required": false,
+      "env_var": "NPM_TOKEN"
+    }
+  ],
+  "health_checks": [
+    {
+      "name": "node_version",
+      "command": "node --version",
+      "expected_pattern": "v[0-9]+\\.[0-9]+\\.[0-9]+"
+    },
+    {
+      "name": "npm_access",
+      "command": "npm ping",
+      "expected_output": "Ping success: {}"
+    }
+  ]
+}

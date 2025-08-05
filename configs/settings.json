@@ -1,0 +1,129 @@
+{
+  "system": {
+    "supported_os": "Ubuntu",
+    "package_manager": "apt"
+  },
+  "repositories": {
+    "github_cli": {
+      "keyring_url": "https://cli.github.com/packages/githubcli-archive-keyring.gpg",
+      "keyring_path": "/usr/share/keyrings/githubcli-archive-keyring.gpg",
+      "apt_source": "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main",
+      "apt_list_file": "/etc/apt/sources.list.d/github-cli.list"
+    }
+  },
+  "packages": {
+    "git": {
+      "package_name": "git",
+      "display_name": "Git"
+    },
+    "github_cli": {
+      "package_name": "gh",
+      "display_name": "GitHub CLI"
+    },
+    "jq": {
+      "package_name": "jq",
+      "display_name": "jq (JSON processor)"
+    }
+  },
+  "messages": {
+    "colors": {
+      "red": "\\033[0;31m",
+      "green": "\\033[0;32m",
+      "yellow": "\\033[1;33m",
+      "blue": "\\033[0;34m",
+      "nc": "\\033[0m"
+    },
+    "prefixes": {
+      "info": "[INFO]",
+      "success": "[SUCCESS]",
+      "error": "[ERROR]",
+      "warning": "[WARNING]"
+    },
+    "prompts": {
+      "continue_non_ubuntu": "This script is designed for Ubuntu. It may not work correctly on other distributions. Do you want to continue anyway? (y/N) ",
+      "configure_git_manually": "Would you like to configure Git manually? (y/N) ",
+      "git_name": "Enter your Git user name: ",
+      "git_email": "Enter your Git email: ",
+      "press_enter": "Press Enter to continue...",
+      "select_option": "Select an option (1-9): "
+    },
+    "status": {
+      "updating_repos": "Updating package repositories...",
+      "already_installed": "%s is already installed",
+      "installing": "Installing %s...",
+      "installed_successfully": "%s installed successfully",
+      "configuring_from_file": "Configuring Git from %s...",
+      "git_configured": "Git configured with:",
+      "config_not_found": "Git config file not found at %s",
+      "script_not_found": "Script not found: %s",
+      "feature_pending": "This feature will be available after Windows environment analysis",
+      "github_auth_hint": "To authenticate with GitHub, run: gh auth login",
+      "adding_repo": "Adding GitHub CLI repository..."
+    }
+  },
+  "menu": {
+    "title": "Linux Development Environment Setup",
+    "separator": "===================================",
+    "options": [
+      {"id": "1", "text": "Install Git and GitHub CLI", "script": "install-git.sh"},
+      {"id": "2", "text": "Install Node.js and TypeScript tools", "script": "install-node.sh"},
+      {"id": "3", "text": "Install .NET SDK and C# tools", "script": "install-dotnet.sh"},
+      {"id": "4", "text": "Install JetBrains Rider", "script": "install-rider.sh"},
+      {"id": "5", "text": "Install Docker", "script": "install-docker.sh"},
+      {"id": "6", "text": "Configure shell (Zsh + Oh My Zsh)", "script": "configure-shell.sh"},
+      {"id": "7", "text": "Install common development tools", "script": "install-dev-tools.sh"},
+      {"id": "8", "text": "Run all installations", "script": "all"},
+      {"id": "9", "text": "Exit", "script": "exit"}
+    ]
+  },
+  "cli_args": {
+    "git": "install-git.sh",
+    "node": "install-node.sh",
+    "dotnet": "install-dotnet.sh",
+    "rider": "install-rider.sh",
+    "docker": "install-docker.sh",
+    "shell": "configure-shell.sh",
+    "dev-tools": "install-dev-tools.sh"
+  },
+  "security": {
+    "password_manager": {
+      "provider": "1password",
+      "comment": "Options: 1password, bitwarden, lastpass, keepass, pass, none",
+      "keepass": {
+        "database_path": "~/Documents/passwords.kdbx"
+      }
+    },
+    "secrets": {
+      "github_token": {
+        "path": "GitHub/Personal Access Token",
+        "env_var": "GITHUB_TOKEN",
+        "field": "password"
+      },
+      "npm_token": {
+        "path": "npm/Access Token",
+        "env_var": "NPM_TOKEN",
+        "field": "password"
+      },
+      "nuget_api_key": {
+        "path": "NuGet/API Key",
+        "env_var": "NUGET_API_KEY",
+        "field": "password"
+      },
+      "docker_hub_token": {
+        "path": "Docker Hub/Access Token",
+        "env_var": "DOCKER_HUB_TOKEN",
+        "field": "password"
+      }
+    }
+  },
+  "logging": {
+    "enabled": true,
+    "level": "INFO",
+    "comment": "Levels: DEBUG, INFO, WARNING, ERROR",
+    "directory": "~/.local/share/setup-dev-env/logs",
+    "archive_directory": "~/.local/share/setup-dev-env/archives",
+    "console": true,
+    "max_files": 10,
+    "rotate_after_days": 7
+  }
+}

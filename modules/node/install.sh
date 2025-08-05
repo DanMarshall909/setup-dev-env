@@ -1,0 +1,150 @@
+#!/bin/bash
+
+# Node.js module installation script
+
+# Source common functions
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+source "$SCRIPT_DIR/../../scripts/common.sh"
+
+install_node_module() {
+    print_status "Installing Node.js module..."
+    log_script_start "node/install.sh"
+    
+    # Install Node.js using NodeSource repository for latest LTS
+    install_nodejs
+    
+    # Install global TypeScript tools
+    install_typescript_tools
+    
+    # Configure npm
+    configure_npm
+    
+    # Verify installation
+    verify_nodejs_installation
+    
+    log_script_end "node/install.sh" 0
+}
+
+install_nodejs() {
+    print_status "Installing Node.js..."
+    
+    if command_exists node; then
+        local current_version=$(node --version)
+        print_warning "Node.js already installed: $current_version"
+        return 0
+    fi
+    
+    # Install Node.js 18.x LTS from NodeSource
+    print_status "Adding NodeSource repository..."
+    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    
+    # Install Node.js
+    install_package "nodejs" "Node.js"
+    
+    # Verify installation
+    print_success "Node.js installed:"
+    node --version
+    npm --version
+}
+
+install_typescript_tools() {
+    print_status "Installing TypeScript and global tools..."
+    
+    # Read global packages from module config
+    local module_config="$SCRIPT_DIR/module.json"
+    local packages=$(jq -r '.global_packages[]' "$module_config" 2>/dev/null)
+    
+    if [ -n "$packages" ]; then
+        # Install packages one by one for better error handling
+        while IFS= read -r package; do
+            if [ -n "$package" ]; then
+                print_status "Installing global package: $package"
+                if npm install -g "$package"; then
+                    print_success "Installed: $package"
+                    log_package_operation "install" "$package" "global"
+                else
+                    print_error "Failed to install: $package"
+                    log_package_operation "install" "$package" "failed"
+                fi
+            fi
+        done <<< "$packages"
+    else
+        # Fallback to default packages
+        print_status "Installing default TypeScript tools..."
+        npm install -g typescript ts-node nodemon prettier eslint @types/node
+    fi
+}
+
+configure_npm() {
+    print_status "Configuring npm..."
+    
+    # Set npm defaults
+    npm config set init-author-name "$(git config --global user.name 2>/dev/null || echo 'Developer')"
+    npm config set init-author-email "$(git config --global user.email 2>/dev/null || echo 'dev@example.com')"
+    npm config set init-license "MIT"
+    npm config set save-exact true
+    
+    # Configure npm token if available
+    configure_npm_auth
+    
+    print_success "npm configured"
+}
+
+configure_npm_auth() {
+    # Try to get npm token from password manager
+    local secret_config=$(get_setting '.security.secrets.npm_token')
+    local secret_path=$(echo "$secret_config" | jq -r '.path')
+    local env_var=$(echo "$secret_config" | jq -r '.env_var')
+    local field=$(echo "$secret_config" | jq -r '.field')
+    
+    local npm_token=$(get_secret_or_env "$secret_path" "$env_var" "$field")
+    
+    if [ -n "$npm_token" ]; then
+        print_status "Configuring npm authentication..."
+        npm config set //registry.npmjs.org/:_authToken "$npm_token"
+        log_config_change "npm" "auth_token" "" "<masked>"
+        print_success "npm authentication configured"
+    else
+        print_status "npm token not configured (will use public packages only)"
+    fi
+}
+
+verify_nodejs_installation() {
+    print_status "Verifying Node.js installation..."
+    
+    # Test Node.js
+    if command_exists node; then
+        local node_version=$(node --version)
+        print_success "Node.js: $node_version"
+    else
+        print_error "Node.js verification failed"
+        return 1
+    fi
+    
+    # Test npm
+    if command_exists npm; then
+        local npm_version=$(npm --version)
+        print_success "npm: $npm_version"
+    else
+        print_error "npm verification failed"
+        return 1
+    fi
+    
+    # Test TypeScript
+    if command_exists tsc; then
+        local ts_version=$(tsc --version)
+        print_success "TypeScript: $ts_version"
+    else
+        print_warning "TypeScript not available globally"
+    fi
+    
+    # Test npm connectivity
+    if npm ping &>/dev/null; then
+        print_success "npm registry connectivity: OK"
+    else
+        print_warning "npm registry connectivity: Failed (check internet connection)"
+    fi
+}
+
+# Main execution
+install_node_module

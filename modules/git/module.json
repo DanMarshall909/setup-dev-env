@@ -1,0 +1,35 @@
+{
+  "name": "git",
+  "description": "Git version control system and GitHub CLI",
+  "version": "1.0.0",
+  "category": "version-control",
+  "tags": ["git", "github", "vcs", "essential"],
+  "dependencies": [],
+  "conflicts": [],
+  "provides": ["git", "gh"],
+  "platforms": ["ubuntu", "debian"],
+  "min_os_version": "18.04",
+  "check_installed": "command -v git >/dev/null && command -v gh >/dev/null",
+  "get_version": "git --version | head -n1 && gh --version | head -n1",
+  "size_estimate": "50MB",
+  "install_time_estimate": "2-3 minutes",
+  "post_install_actions": [
+    "Configure Git user settings",
+    "Authenticate with GitHub CLI"
+  ],
+  "documentation": {
+    "homepage": "https://git-scm.com/",
+    "docs": "https://docs.github.com/en/github-cli",
+    "config_files": [
+      "~/.gitconfig"
+    ]
+  },
+  "secrets": [
+    {
+      "name": "github_token",
+      "description": "GitHub Personal Access Token",
+      "required": false,
+      "env_var": "GITHUB_TOKEN"
+    }
+  ]
+}

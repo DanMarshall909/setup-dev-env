@@ -112,14 +112,14 @@ resolve_dependencies() {
     local module_name=$1
     local -a dep_order=()
     
-    _resolve_deps_recursive "$module_name" dep_order
+    _resolve_deps_recursive "$module_name" "dep_order"
     printf '%s\n' "${dep_order[@]}"
 }
 
 # Recursive dependency resolution with cycle detection
 _resolve_deps_recursive() {
     local module_name=$1
-    local -n order_ref=$2
+    local order_array_name=$2
     
     # Check for circular dependency
     if [ "${INSTALLING_MODULES[$module_name]}" = "true" ]; then
@@ -130,8 +130,12 @@ _resolve_deps_recursive() {
     # Mark as being processed
     INSTALLING_MODULES[$module_name]="true"
     
+    # Use eval to work with the array name
+    local current_array
+    eval "current_array=(\"\${${order_array_name}[@]}\")"
+    
     # Skip if already processed
-    for installed in "${order_ref[@]}"; do
+    for installed in "${current_array[@]}"; do
         if [ "$installed" = "$module_name" ]; then
             INSTALLING_MODULES[$module_name]=""
             return 0
@@ -147,11 +151,11 @@ _resolve_deps_recursive() {
             return 1
         fi
         
-        _resolve_deps_recursive "$dep" order_ref
+        _resolve_deps_recursive "$dep" "$order_array_name"
     done
     
-    # Add this module to the order
-    order_ref+=("$module_name")
+    # Add this module to the order using eval
+    eval "${order_array_name}+=('$module_name')"
     INSTALLING_MODULES[$module_name]=""
     
     return 0
@@ -189,8 +193,10 @@ install_module() {
     
     if is_dry_run; then
         print_status "DRY RUN: Planning installation of module: $module_name"
+        log_system_info "Module Installation" "Dry-run planning for $module_name"
     else
         print_status "Installing module: $module_name"
+        log_system_info "Module Installation" "Starting installation of $module_name"
     fi
     log_info "Starting installation of module: $module_name"
     

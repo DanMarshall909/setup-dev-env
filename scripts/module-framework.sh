@@ -26,12 +26,27 @@ init_module() {
     
     print_status "Installing $module_display_name module..."
     log_script_start "$MODULE_SCRIPT_PATH"
+    
+    # Enhanced logging for module initialization
+    if declare -f log_module_start > /dev/null 2>&1; then
+        log_module_start "$module_name"
+    fi
 }
 
 # Standard module completion
 complete_module() {
     local exit_code=${1:-0}
     log_script_end "$MODULE_SCRIPT_PATH" "$exit_code"
+    
+    # Enhanced logging for module completion
+    if declare -f log_module_success > /dev/null 2>&1 && declare -f log_module_failure > /dev/null 2>&1; then
+        if [ "$exit_code" -eq 0 ]; then
+            log_module_success "$MODULE_NAME"
+        else
+            log_module_failure "$MODULE_NAME" "Installation script returned exit code $exit_code"
+        fi
+    fi
+    
     return "$exit_code"
 }
 
@@ -249,16 +264,69 @@ add_apt_repository() {
     fi
     
     print_status "Adding $description..."
+    log_command "add_apt_repository" "Adding $description repository"
     
-    # Add GPG key
-    if wget -qO- "$repo_key_url" | sudo gpg --dearmor -o "/etc/apt/trusted.gpg.d/$(basename "$list_file" .list).gpg"; then
-        # Add repository
-        echo "$repo_line" | sudo tee "$list_file" > /dev/null
-        sudo apt update
-        print_success "$description added successfully"
-        return 0
+    # Create keyrings directory if it doesn't exist
+    sudo mkdir -p /etc/apt/keyrings
+    
+    # Remove existing repository file to avoid conflicts
+    if [ -f "$list_file" ]; then
+        print_status "Removing existing $description configuration..."
+        sudo rm -f "$list_file"
+    fi
+    
+    # Add GPG key with comprehensive error handling
+    local keyring_file="/etc/apt/keyrings/$(basename "$list_file" .list).gpg"
+    local temp_key_file="/tmp/$(basename "$list_file" .list)-key.gpg"
+    
+    print_status "Downloading GPG key for $description..."
+    if wget -qO "$temp_key_file" "$repo_key_url" 2>/dev/null; then
+        print_status "Installing GPG key for $description..."
+        if sudo gpg --dearmor -o "$keyring_file" "$temp_key_file" 2>/dev/null; then
+            # Clean up temporary file
+            rm -f "$temp_key_file"
+            
+            # Validate repository line format
+            if [[ "$repo_line" =~ ^deb.*\[.*signed-by=.*\].*$ ]]; then
+                print_status "Adding repository configuration..."
+                echo "$repo_line" | sudo tee "$list_file" > /dev/null
+                
+                # Update package lists with detailed error handling
+                print_status "Updating package lists..."
+                local apt_output
+                if apt_output=$(sudo apt update 2>&1); then
+                    print_success "$description added successfully"
+                    log_command "apt update" "Successfully updated after adding $description"
+                    return 0
+                else
+                    # Check if it's just warnings or actual errors
+                    if echo "$apt_output" | grep -q "^E:"; then
+                        print_error "$description added but apt update failed"
+                        log_error_details "Repository Setup" "apt update failed after adding $description: $apt_output"
+                        # Remove the problematic repository
+                        sudo rm -f "$list_file"
+                        return 1
+                    else
+                        print_warning "$description added but apt update had warnings"
+                        log_command "apt update" "Added $description with warnings: $apt_output"
+                        return 0
+                    fi
+                fi
+            else
+                print_error "Invalid repository line format for $description"
+                log_error_details "Repository Setup" "Invalid repository line format: $repo_line"
+                rm -f "$temp_key_file"
+                return 1
+            fi
+        else
+            print_error "Failed to install GPG key for $description"
+            log_error_details "Repository Setup" "Failed to dearmor GPG key for $description"
+            rm -f "$temp_key_file"
+            return 1
+        fi
     else
-        print_error "Failed to add $description"
+        print_error "Failed to download GPG key for $description from $repo_key_url"
+        log_error_details "Repository Setup" "Failed to download GPG key from $repo_key_url"
         return 1
     fi
 }

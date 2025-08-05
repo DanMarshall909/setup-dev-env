@@ -103,6 +103,9 @@ EOF
     sed -i "s/MODULE_DISPLAY_NAME=\"Template Module\"/MODULE_DISPLAY_NAME=\"$display_name\"/g" "$module_dir/install.sh"
     sed -i "s/MODULE_NAME/$(echo "$module_name" | tr '-' '_')/g" "$module_dir/install.sh"
     
+    # Fix the framework path (very important!)
+    sed -i 's|../scripts/module-framework.sh|../../scripts/module-framework.sh|g' "$module_dir/install.sh"
+    
     # Create status.sh
     cat > "$module_dir/status.sh" << EOF
 #!/bin/bash

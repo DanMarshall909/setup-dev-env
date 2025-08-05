@@ -5,7 +5,7 @@
 
 # Source module framework
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source "$SCRIPT_DIR/../scripts/module-framework.sh"
+source "$SCRIPT_DIR/../../scripts/module-framework.sh"
 
 # Module-specific configuration
 dev_tools="dev-tools"

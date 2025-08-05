@@ -12,6 +12,49 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+# Initialize logging early
+init_early_logging() {
+    export SETUP_LOG_DIR="$HOME/.local/share/setup-dev-env/logs"
+    mkdir -p "$SETUP_LOG_DIR"
+    export SETUP_INSTALL_LOG="$SETUP_LOG_DIR/install-$(date +%Y%m%d-%H%M%S).log"
+    ln -sf "$SETUP_INSTALL_LOG" "$SETUP_LOG_DIR/latest-install.log"
+    
+    echo "================================================================================
+Linux Development Environment - One-liner Installation Log
+================================================================================
+Start Time: $(date)
+Host: $(hostname)
+User: $(whoami)
+Command: $0 $*
+================================================================================
+" > "$SETUP_INSTALL_LOG"
+}
+
+# Enhanced logging function
+log_install() {
+    local level="$1"
+    shift
+    local message="$*"
+    local timestamp="$(date '+%H:%M:%S')"
+    
+    echo "[$timestamp] [$level] $message" >> "$SETUP_INSTALL_LOG"
+}
+
+# Enhanced error logging for debugging
+log_install_error() {
+    local context="$1"
+    local error_message="$2"
+    
+    log_install "ERROR" "$context: $error_message"
+    echo "" >> "$SETUP_INSTALL_LOG"
+    echo "🚨 ERROR in $context:" >> "$SETUP_INSTALL_LOG"
+    echo "   $error_message" >> "$SETUP_INSTALL_LOG"
+    echo "" >> "$SETUP_INSTALL_LOG"
+}
+
+# Initialize early logging
+init_early_logging
+
 # Repository settings
 REPO_URL="https://github.com/danmarshall909/setup-dev-env.git"
 INSTALL_DIR="$HOME/setup-dev-env"
@@ -46,19 +89,34 @@ echo -e "${BLUE}[INFO]${NC} Checking prerequisites..."
 if ! command -v git &> /dev/null; then
     if [[ "$DRY_RUN" == "true" ]]; then
         echo -e "${BLUE}[DRY RUN]${NC} Would install: git"
+        log_install "INFO" "Dry-run: Would install git prerequisite"
     else
         echo -e "${YELLOW}[WARNING]${NC} Git not found. Installing git..."
-        sudo apt update
-        sudo apt install -y git
+        log_install "WARN" "Git prerequisite missing, installing..."
+        if sudo apt update && sudo apt install -y git; then
+            log_install "INFO" "Git prerequisite installed successfully"
+        else
+            echo -e "${RED}[ERROR]${NC} Failed to install git"
+            log_install_error "Prerequisites" "Failed to install git prerequisite"
+            exit 1
+        fi
     fi
 fi
 
 if ! command -v curl &> /dev/null; then
     if [[ "$DRY_RUN" == "true" ]]; then
         echo -e "${BLUE}[DRY RUN]${NC} Would install: curl"
+        log_install "INFO" "Dry-run: Would install curl prerequisite"
     else
         echo -e "${YELLOW}[WARNING]${NC} curl not found. Installing curl..."
-        sudo apt install -y curl
+        log_install "WARN" "Curl prerequisite missing, installing..."
+        if sudo apt install -y curl; then
+            log_install "INFO" "Curl prerequisite installed successfully"
+        else
+            echo -e "${RED}[ERROR]${NC} Failed to install curl"
+            log_install_error "Prerequisites" "Failed to install curl prerequisite"
+            exit 1
+        fi
     fi
 fi
 

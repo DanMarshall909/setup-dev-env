@@ -10,10 +10,11 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # Source common functions and module manager
 source "$SCRIPT_DIR/scripts/common.sh"
+source "$SCRIPT_DIR/scripts/setup-logger.sh"
 source "$SCRIPT_DIR/scripts/module-manager.sh"
 
-# Initialize logging
-init_logging
+# Initialize comprehensive logging
+init_setup_logging
 
 # Main interactive setup
 interactive_setup() {
@@ -114,14 +115,21 @@ show_interactive_menu() {
 install_all_modules() {
     if is_dry_run; then
         print_status "DRY RUN: Planning installation of all modules..."
+        log_system_info "Operation" "Dry-run installation of all modules"
     else
         print_status "Installing all modules..."
+        log_system_info "Operation" "Installing all modules"
     fi
     
     local modules=$(list_modules)
     local failed_modules=()
+    local success_count=0
+    local total_count=0
     
     for module in $modules; do
+        total_count=$((total_count + 1))
+        log_module_start "$module"
+        
         if is_dry_run; then
             print_status "Would install module: $module"
         else
@@ -129,12 +137,15 @@ install_all_modules() {
         fi
         
         if install_module "$module" false "$DRY_RUN"; then
+            success_count=$((success_count + 1))
+            log_module_success "$module"
             if is_dry_run; then
                 print_success "Module '$module' would be installed successfully"
             else
                 print_success "Module '$module' installed successfully"
             fi
         else
+            log_module_failure "$module" "Installation failed"
             if is_dry_run; then
                 print_error "Would fail to install module: $module"
             else
@@ -147,8 +158,10 @@ install_all_modules() {
     
     if [ ${#failed_modules[@]} -eq 0 ]; then
         print_success "All modules installed successfully!"
+        log_system_info "Final Result" "All $total_count modules installed successfully"
     else
         print_warning "Some modules failed to install: ${failed_modules[*]}"
+        log_system_info "Final Result" "$success_count/$total_count modules installed, failed: ${failed_modules[*]}"
     fi
 }
 
@@ -270,6 +283,16 @@ Available Modules:
 $(list_modules | sed 's/^/    /')
 EOF
 }
+
+# Trap to finalize logging on exit
+finalize_logging() {
+    local exit_code=$?
+    finalize_setup_logging "$exit_code"
+    exit "$exit_code"
+}
+
+# Set up trap for clean exit
+trap finalize_logging EXIT
 
 # Run main function
 main "$@"

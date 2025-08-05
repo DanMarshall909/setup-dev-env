@@ -1,0 +1,27 @@
+{
+  "name": "essentials",
+  "description": "Essential build tools and system utilities",
+  "version": "1.0.0",
+  "category": "system",
+  "tags": ["essentials", "system"],
+  "dependencies": [],
+  "conflicts": [],
+  "provides": ["essentials"],
+  "platforms": ["ubuntu", "debian"],
+  "min_os_version": "18.04",
+  "check_installed": "command -v essentials >/dev/null",
+  "get_version": "essentials --version 2>/dev/null | head -n1 || echo 'unknown'",
+  "size_estimate": "Unknown",
+  "install_time_estimate": "2-5 minutes",
+  "post_install_actions": [
+    "Configure Essential Tools settings",
+    "Verify installation"
+  ],
+  "documentation": {
+    "homepage": "https://example.com",
+    "docs": "https://example.com/docs",
+    "config_files": [
+      "~/.config/essentials/"
+    ]
+  }
+}

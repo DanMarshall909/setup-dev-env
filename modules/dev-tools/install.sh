@@ -144,14 +144,37 @@ install_dev_tools() {
             local temp_dir="/tmp/jless-install"
             mkdir -p "$temp_dir"
             
-            if wget -q "$jless_url" -O "$temp_dir/jless.zip"; then
-                unzip -q "$temp_dir/jless.zip" -d "$temp_dir"
-                sudo mv "$temp_dir/jless" /usr/local/bin/
-                sudo chmod +x /usr/local/bin/jless
-                rm -rf "$temp_dir"
-                print_success "jless installed"
+            # Try multiple download methods
+            local download_success=false
+            if curl -fsSL "$jless_url" -o "$temp_dir/jless.zip" 2>/dev/null; then
+                download_success=true
+            elif wget -q "$jless_url" -O "$temp_dir/jless.zip" 2>/dev/null; then
+                download_success=true
+            fi
+            
+            if [ "$download_success" = "true" ] && unzip -q "$temp_dir/jless.zip" -d "$temp_dir" 2>/dev/null; then
+                if [ -f "$temp_dir/jless" ]; then
+                    sudo mv "$temp_dir/jless" /usr/local/bin/
+                    sudo chmod +x /usr/local/bin/jless
+                    rm -rf "$temp_dir"
+                    print_success "jless installed"
+                else
+                    print_warning "Failed to install jless - binary not found in archive"
+                    rm -rf "$temp_dir"
+                fi
             else
-                print_warning "Failed to install jless"
+                # Fallback: Try installing via cargo if available  
+                if command -v cargo &>/dev/null; then
+                    print_status "Trying jless installation via cargo..."
+                    if timeout 120 cargo install jless &>/dev/null; then
+                        print_success "jless installed via cargo"
+                    else
+                        print_warning "Failed to install jless via cargo - skipping"
+                    fi
+                else
+                    print_warning "Failed to install jless - network or extraction error"
+                fi
+                rm -rf "$temp_dir"
             fi
         fi
     else

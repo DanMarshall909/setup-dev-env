@@ -5,7 +5,12 @@ A comprehensive, automated setup script for Linux development environments with 
 ## 🚀 Quick Start (One-liner)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/setup-dev-env/main/quick-setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/setup-dev-env/main/setup.sh | bash
+```
+
+**Preview what would be installed (dry-run):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/setup-dev-env/main/setup.sh | bash -s -- --dry-run
 ```
 
 ## 📋 What Gets Installed
@@ -18,6 +23,27 @@ curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/setup-dev-env/main/qu
 - **Zsh + Oh My Zsh** - Enhanced shell experience
 - **VS Code** - Lightweight code editor with extensions
 - **Development Tools** - curl, wget, htop, ripgrep, bat, jq, and more
+
+## 🔍 Dry-Run Mode
+
+Preview what would be installed without making any changes to your system:
+
+```bash
+# Preview before installation
+./setup.sh node --dry-run            # Show what Node.js installation would do
+./setup.sh all --dry-run             # Preview complete setup
+./setup.sh --dry-run                 # Interactive mode with dry-run
+
+# Combines with other flags
+./setup.sh node --force --dry-run    # Show forced reinstall plan
+```
+
+**Dry-run shows:**
+- Installation order and dependencies
+- Commands that would be executed
+- Packages that would be installed
+- Configuration changes that would be made
+- Network calls that would be performed
 
 ## 🔐 Security Features
 
@@ -66,29 +92,46 @@ Git user configuration:
 
 ## 🎯 Usage Options
 
-### 1. Fully Automated Setup
+### 1. Interactive Setup (Recommended)
 ```bash
-# Clone and run everything automatically
+# Clone and run interactively
 git clone https://github.com/YOUR_USERNAME/setup-dev-env.git
 cd setup-dev-env
-./scripts/run-all.sh --force
-```
-
-### 2. Interactive Setup
-```bash
-# Run with menu system
 ./setup.sh
 ```
 
-### 3. Individual Components
+### 2. Dry-Run Mode (Preview Changes)
 ```bash
-# Install specific tools
+# See what would be installed without making changes
+./setup.sh --dry-run                 # Interactive dry-run
+./setup.sh all --dry-run             # Preview full installation
+./setup.sh node --dry-run            # Preview specific module
+```
+
+### 3. Individual Modules
+```bash
+# Install specific modules
 ./setup.sh git        # Git and GitHub CLI
 ./setup.sh node       # Node.js and TypeScript
-./setup.sh dotnet     # .NET SDK
-./setup.sh rider      # JetBrains Rider
-./setup.sh docker     # Docker
-./setup.sh shell      # Zsh configuration
+./setup.sh claude     # Claude CLI (requires node)
+```
+
+### 4. Module Management
+```bash
+# List available modules
+./setup.sh list
+
+# Show module information
+./setup.sh info node
+
+# Show dependency tree
+./setup.sh tree claude
+```
+
+### 5. Fully Automated Setup
+```bash
+# Install everything automatically
+./setup.sh all --force
 ```
 
 ### 4. With Environment Variables

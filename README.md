@@ -4,6 +4,7 @@ A comprehensive, automated setup script for Linux development environments with 
 
 ## 🚀 Quick Start (One-liner)
 
+**Install everything automatically:**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/danmarshall909/setup-dev-env/master/install.sh | bash
 ```
@@ -12,6 +13,12 @@ curl -fsSL https://raw.githubusercontent.com/danmarshall909/setup-dev-env/master
 ```bash
 curl -fsSL https://raw.githubusercontent.com/danmarshall909/setup-dev-env/master/install.sh | bash -s -- --dry-run
 ```
+
+The one-liner will:
+1. Install prerequisites (git, curl) if needed
+2. Clone the repository to `~/setup-dev-env`
+3. **Automatically install all modules** (git, node, claude, etc.)
+4. Set up your complete development environment
 
 ## 📋 What Gets Installed
 

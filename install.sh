@@ -16,11 +16,18 @@ NC='\033[0m'
 REPO_URL="https://github.com/danmarshall909/setup-dev-env.git"
 INSTALL_DIR="$HOME/setup-dev-env"
 
-# Check if running in dry-run mode
+# Check if running in dry-run mode and filter arguments
 DRY_RUN=false
+FILTERED_ARGS=()
+
 for arg in "$@"; do
     case "$arg" in
-        "--dry-run"|"-d") DRY_RUN=true ;;
+        "--dry-run"|"-d") 
+            DRY_RUN=true 
+            ;;
+        *)
+            FILTERED_ARGS+=("$arg")
+            ;;
     esac
 done
 
@@ -59,7 +66,12 @@ fi
 if [[ "$DRY_RUN" == "true" ]]; then
     echo -e "${BLUE}[DRY RUN]${NC} Would clone repository to: $INSTALL_DIR"
     echo -e "${BLUE}[DRY RUN]${NC} Would execute: git clone $REPO_URL $INSTALL_DIR"
-    echo -e "${BLUE}[DRY RUN]${NC} Would run: $INSTALL_DIR/setup.sh $*"
+    
+    if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
+        echo -e "${BLUE}[DRY RUN]${NC} Would run: $INSTALL_DIR/setup.sh all --dry-run (install all modules)"
+    else
+        echo -e "${BLUE}[DRY RUN]${NC} Would run: $INSTALL_DIR/setup.sh ${FILTERED_ARGS[*]} --dry-run"
+    fi
 else
     if [ -d "$INSTALL_DIR" ]; then
         echo -e "${BLUE}[INFO]${NC} Updating existing installation..."
@@ -73,7 +85,22 @@ else
     # Run the main setup script
     echo -e "${BLUE}[INFO]${NC} Starting setup..."
     cd "$INSTALL_DIR"
-    ./setup.sh "$@"
+    
+    # If no filtered arguments provided, run automated setup
+    if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
+        echo -e "${BLUE}[INFO]${NC} Running automated setup (install all modules)..."
+        if [[ "$DRY_RUN" == "true" ]]; then
+            ./setup.sh all --dry-run
+        else
+            ./setup.sh all
+        fi
+    else
+        if [[ "$DRY_RUN" == "true" ]]; then
+            ./setup.sh "${FILTERED_ARGS[@]}" --dry-run
+        else
+            ./setup.sh "${FILTERED_ARGS[@]}"
+        fi
+    fi
 fi
 
 if [[ "$DRY_RUN" == "true" ]]; then

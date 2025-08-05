@@ -5,12 +5,12 @@ A comprehensive, automated setup script for Linux development environments with 
 ## 🚀 Quick Start (One-liner)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/setup-dev-env/main/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/danmarshall909/setup-dev-env/main/setup.sh | bash
 ```
 
 **Preview what would be installed (dry-run):**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/setup-dev-env/main/setup.sh | bash -s -- --dry-run
+curl -fsSL https://raw.githubusercontent.com/danmarshall909/setup-dev-env/main/setup.sh | bash -s -- --dry-run
 ```
 
 ## 📋 What Gets Installed
@@ -95,7 +95,7 @@ Git user configuration:
 ### 1. Interactive Setup (Recommended)
 ```bash
 # Clone and run interactively
-git clone https://github.com/YOUR_USERNAME/setup-dev-env.git
+git clone https://github.com/danmarshall909/setup-dev-env.git
 cd setup-dev-env
 ./setup.sh
 ```

@@ -264,7 +264,7 @@ add_apt_repository() {
     fi
     
     print_status "Adding $description..."
-    log_command "add_apt_repository" "Adding $description repository"
+    log_info "Adding $description repository"
     
     # Create keyrings directory if it doesn't exist
     sudo mkdir -p /etc/apt/keyrings
@@ -296,7 +296,7 @@ add_apt_repository() {
                 local apt_output
                 if apt_output=$(sudo apt update 2>&1); then
                     print_success "$description added successfully"
-                    log_command "apt update" "Successfully updated after adding $description"
+                    log_info "Successfully updated package lists after adding $description"
                     return 0
                 else
                     # Check if it's just warnings or actual errors
@@ -308,7 +308,7 @@ add_apt_repository() {
                         return 1
                     else
                         print_warning "$description added but apt update had warnings"
-                        log_command "apt update" "Added $description with warnings: $apt_output"
+                        log_warning "Added $description repository with APT warnings"
                         return 0
                     fi
                 fi

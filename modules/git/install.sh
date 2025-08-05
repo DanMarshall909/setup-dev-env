@@ -92,7 +92,7 @@ install_github_cli() {
         local apt_list_file=$(get_setting '.repositories.github_cli.apt_list_file')
         
         # Add GitHub CLI repository using framework function
-        add_apt_repository "$keyring_url" "deb [arch=\$(dpkg --print-architecture) signed-by=$keyring_path] https://cli.github.com/packages stable main" "$apt_list_file" "GitHub CLI"
+        add_apt_repository "$keyring_url" "deb [arch=$(dpkg --print-architecture) signed-by=$keyring_path] https://cli.github.com/packages stable main" "$apt_list_file" "GitHub CLI"
         install_package "$gh_package" "$gh_display"
         
         print_success "$(get_message 'installed_successfully' "$gh_display")"

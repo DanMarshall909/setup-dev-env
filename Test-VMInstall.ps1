@@ -2,35 +2,35 @@
 # Supports VirtualBox, VMware, and Hyper-V
 
 param(
-    [Parameter(Position=0)]
-    [string]$VMName = "pop-os-test",
-    
-    [Parameter(Position=1)]
-    [string]$SnapshotName = "clean-install",
-    
-    [Parameter(Position=2)]
+    [Parameter(Position = 0)]
+    [string]$VMName = "System76-PopOS",
+   
+    [Parameter(Position = 1)]
+    [string]$SnapshotName = "Snapshot 2",
+   
+    [Parameter(Position = 2)]
     [ValidateSet("VirtualBox", "VMware", "HyperV")]
     [string]$VMType = "VirtualBox",
-    
-    [Parameter(Position=3)]
+   
+    [Parameter(Position = 3)]
     [string]$VMUser = "dan",
-    
-    [Parameter(Position=4)]
+   
+    [Parameter(Position = 4)]
     [string]$VMHost = "localhost",
-    
-    [Parameter(Position=5)]
+   
+    [Parameter(Position = 5)]
     [int]$SSHPort = 2222,
-    
+   
     [Parameter()]
     [ValidateSet("oneliner", "clone", "local")]
     [string]$InstallMethod = "oneliner",
-    
+   
     [Parameter()]
     [string]$LocalPath = $PWD.Path,
-    
+   
     [Parameter()]
     [switch]$DryRun,
-    
+   
     [Parameter()]
     [switch]$Help
 )
@@ -162,7 +162,7 @@ function Wait-ForSSH {
         try {
             # Test SSH connection
             $result = ssh -q -o ConnectTimeout=5 -o StrictHostKeyChecking=no `
-                          -p $SSHPort "$VMUser@$VMHost" "exit" 2>$null
+                -p $SSHPort "$VMUser@$VMHost" "exit" 2>$null
             if ($LASTEXITCODE -eq 0) {
                 Write-Success "SSH connection established"
                 return $true
@@ -217,17 +217,17 @@ function Invoke-LocalInstall {
     
     # Copy all files except .git
     Get-ChildItem -Path $LocalPath -Recurse -File | 
-        Where-Object { $_.FullName -notmatch '\.git|logs|\.log$' } |
-        ForEach-Object {
-            $relativePath = $_.FullName.Substring($LocalPath.Length + 1).Replace('\', '/')
-            $remoteDir = Split-Path -Parent $relativePath
+    Where-Object { $_.FullName -notmatch '\.git|logs|\.log$' } |
+    ForEach-Object {
+        $relativePath = $_.FullName.Substring($LocalPath.Length + 1).Replace('\', '/')
+        $remoteDir = Split-Path -Parent $relativePath
             
-            if ($remoteDir) {
-                ssh -p $SSHPort "$VMUser@$VMHost" "mkdir -p ~/setup-dev-env/$remoteDir" 2>$null
-            }
-            
-            scp -P $SSHPort $_.FullName "${VMUser}@${VMHost}:~/setup-dev-env/$relativePath" 2>$null
+        if ($remoteDir) {
+            ssh -p $SSHPort "$VMUser@$VMHost" "mkdir -p ~/setup-dev-env/$remoteDir" 2>$null
         }
+            
+        scp -P $SSHPort $_.FullName "${VMUser}@${VMHost}:~/setup-dev-env/$relativePath" 2>$null
+    }
     
     Write-Info "Running local installation..."
     ssh -p $SSHPort "$VMUser@$VMHost" "cd ~/setup-dev-env && ./setup.sh all"

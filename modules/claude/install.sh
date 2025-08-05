@@ -2,9 +2,10 @@
 
 # Claude Code module installation script
 
-# Source common functions
+# Source common functions and module manager
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "$SCRIPT_DIR/../../scripts/common.sh"
+source "$SCRIPT_DIR/../../scripts/module-manager.sh"
 
 install_claude_module() {
     print_status "Installing Claude Code module..."
@@ -29,12 +30,27 @@ verify_nodejs_dependency() {
     print_status "Verifying Node.js dependency..."
     
     if ! command_exists node; then
-        print_error "Node.js is required but not installed"
-        print_status "Please install the 'node' module first: ./setup.sh node"
+        print_warning "Node.js is required but not installed"
+        print_status "Installing Node.js dependency..."
+        
+        # Try to install node module
+        if install_module "node" false false; then
+            print_success "Node.js dependency installed"
+            # Update PATH for npm-global
+            export PATH=~/.npm-global/bin:$PATH
+        else
+            print_error "Failed to install Node.js dependency"
+            print_status "Please install manually: ./setup.sh node"
+            return 1
+        fi
+    fi
+    
+    local node_version=$(node --version 2>/dev/null | sed 's/v//')
+    if [ -z "$node_version" ]; then
+        print_error "Node.js verification failed"
         return 1
     fi
     
-    local node_version=$(node --version | sed 's/v//')
     local major_version=$(echo "$node_version" | cut -d. -f1)
     
     if [ "$major_version" -lt 18 ]; then
@@ -43,6 +59,7 @@ verify_nodejs_dependency() {
     fi
     
     print_success "Node.js dependency satisfied: v$node_version"
+    return 0
 }
 
 install_claude_code_cli() {
@@ -61,15 +78,38 @@ install_claude_code_cli() {
         return 0
     fi
     
-    # Install via npm
+    # Install via npm with proper PATH
     print_status "Installing Claude Code CLI via npm..."
+    
+    # Ensure npm global bin is in PATH
+    export PATH=~/.npm-global/bin:$PATH
+    
     if npm install -g @anthropic/claude-code; then
         print_success "Claude Code CLI installed successfully"
         log_package_operation "install" "@anthropic/claude-code" "global"
+        
+        # Create symlink if needed
+        if [ -f ~/.npm-global/bin/claude-code ] && [ ! -f /usr/local/bin/claude-code ]; then
+            sudo ln -sf ~/.npm-global/bin/claude-code /usr/local/bin/claude-code 2>/dev/null || true
+        fi
     else
         print_error "Failed to install Claude Code CLI"
         log_package_operation "install" "@anthropic/claude-code" "failed"
-        return 1
+        
+        # Try alternative installation method
+        print_status "Trying alternative installation method..."
+        if npx @anthropic/claude-code --version &>/dev/null; then
+            print_success "Claude Code available via npx"
+            # Create wrapper script
+            cat > ~/.local/bin/claude-code << 'EOF'
+#!/bin/bash
+exec npx @anthropic/claude-code "$@"
+EOF
+            chmod +x ~/.local/bin/claude-code
+            print_success "Created claude-code wrapper script"
+        else
+            return 1
+        fi
     fi
 }
 

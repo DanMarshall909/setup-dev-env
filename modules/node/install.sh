@@ -101,12 +101,39 @@ configure_npm() {
     if is_dry_run; then
         local author_name="$(git config --global user.name 2>/dev/null || echo 'Developer')"
         local author_email="$(git config --global user.email 2>/dev/null || echo 'dev@example.com')"
+        print_would_configure "npm" "Global packages directory: ~/.npm-global"
         print_would_configure "npm" "init-author-name=$author_name"
         print_would_configure "npm" "init-author-email=$author_email"
         print_would_configure "npm" "init-license=MIT"
         print_would_configure "npm" "save-exact=true"
         print_would_configure "npm" "authentication token (if available)"
         return 0
+    fi
+    
+    # Fix npm permissions by using user directory for global packages
+    print_status "Setting up npm global packages directory..."
+    mkdir -p ~/.npm-global
+    npm config set prefix '~/.npm-global'
+    
+    # Add to PATH in current session
+    export PATH=~/.npm-global/bin:$PATH
+    
+    # Add to shell configuration files
+    local shell_config=""
+    if [ -f ~/.bashrc ]; then
+        shell_config=~/.bashrc
+    elif [ -f ~/.bash_profile ]; then
+        shell_config=~/.bash_profile
+    fi
+    
+    if [ -n "$shell_config" ]; then
+        # Check if already added
+        if ! grep -q "npm-global/bin" "$shell_config"; then
+            echo "" >> "$shell_config"
+            echo "# npm global packages path" >> "$shell_config"
+            echo 'export PATH=~/.npm-global/bin:$PATH' >> "$shell_config"
+            print_success "Added npm global path to $shell_config"
+        fi
     fi
     
     # Set npm defaults

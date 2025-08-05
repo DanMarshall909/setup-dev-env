@@ -1,27 +1,31 @@
 {
   "name": "dev-tools",
-  "description": "Common development utilities and tools",
-  "version": "1.0.0",
-  "category": "utilities",
-  "tags": ["dev-tools", "utilities"],
+  "description": "Modern command-line development tools (ripgrep, fd, bat, fzf, etc.)",
+  "version": "2.0.0",
+  "category": "tool",
+  "tags": ["dev-tools", "utilities", "cli", "productivity", "search"],
   "dependencies": [],
   "conflicts": [],
-  "provides": ["dev-tools"],
-  "platforms": ["ubuntu", "debian"],
+  "provides": ["ripgrep", "fd", "bat", "fzf", "tldr", "ncdu", "httpie", "duf", "jless", "yq"],
+  "platforms": ["ubuntu", "debian", "pop-os"],
   "min_os_version": "18.04",
-  "check_installed": "command -v dev-tools >/dev/null",
-  "get_version": "dev-tools --version 2>/dev/null | head -n1 || echo 'unknown'",
-  "size_estimate": "Unknown",
-  "install_time_estimate": "2-5 minutes",
+  "check_installed": "command -v rg >/dev/null || command -v fd >/dev/null || command -v bat >/dev/null",
+  "get_version": "echo '2.0.0'",
+  "size_estimate": "~100MB",
+  "install_time_estimate": "3-5 minutes",
   "post_install_actions": [
-    "Configure Development Tools settings",
-    "Verify installation"
+    "Configure bat themes and syntax highlighting",
+    "Set up fzf shell integration",
+    "Update tldr cache",
+    "Configure ripgrep defaults"
   ],
   "documentation": {
-    "homepage": "https://example.com",
-    "docs": "https://example.com/docs",
+    "homepage": "https://github.com/sharkdp/bat",
+    "docs": "https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md",
     "config_files": [
-      "~/.config/dev-tools/"
+      "~/.config/bat/config",
+      "~/.config/ripgrep/config",
+      "~/.fzf.bash"
     ]
   }
 }

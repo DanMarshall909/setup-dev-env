@@ -34,10 +34,25 @@ install_docker() {
     install_package_with_dry_run "gnupg" "GnuPG"
     install_package_with_dry_run "lsb-release" "LSB release"
     
+    # Detect distribution for Docker repository
+    local distro=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
+    local codename=$(lsb_release -cs)
+    
+    # Pop!_OS is based on Ubuntu, use Ubuntu repos
+    if [[ "$distro" == "pop" ]]; then
+        distro="ubuntu"
+        # Map Pop!_OS version to Ubuntu codename
+        case "$(lsb_release -rs)" in
+            "22.04") codename="jammy" ;;
+            "20.04") codename="focal" ;;
+            *) codename="jammy" ;; # Default to latest LTS
+        esac
+    fi
+    
     # Add Docker repository
     add_apt_repository \
-        "https://download.docker.com/linux/ubuntu/gpg" \
-        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+        "https://download.docker.com/linux/$distro/gpg" \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$distro $codename stable" \
         "/etc/apt/sources.list.d/docker.list" \
         "Docker repository"
     
@@ -47,14 +62,44 @@ install_docker() {
     install_package_with_dry_run "containerd.io" "containerd"
     install_package_with_dry_run "docker-compose-plugin" "Docker Compose"
     
-    # Add user to docker group
-    print_status "Adding user to docker group..."
-    sudo usermod -aG docker $USER
+    # Configure and start Docker
+    print_status "Configuring Docker service..."
     
-    # Start and enable Docker
-    print_status "Starting Docker service..."
-    sudo systemctl start docker
-    sudo systemctl enable docker
+    # Enable and start Docker service with error handling
+    if ! is_dry_run; then
+        # Enable Docker to start on boot
+        if sudo systemctl enable docker 2>/dev/null; then
+            print_success "Docker enabled to start on boot"
+        else
+            print_warning "Could not enable Docker service (systemd may not be available)"
+        fi
+        
+        # Try to start Docker
+        if sudo systemctl start docker 2>/dev/null; then
+            print_success "Docker service started"
+        else
+            # Fallback for systems without systemd
+            if sudo service docker start 2>/dev/null; then
+                print_success "Docker service started (via init.d)"
+            else
+                print_warning "Could not start Docker service - may need manual start"
+            fi
+        fi
+        
+        # Create docker group if it doesn't exist
+        if ! getent group docker > /dev/null 2>&1; then
+            sudo groupadd docker
+        fi
+        
+        # Add user to docker group
+        if sudo usermod -aG docker "$USER"; then
+            print_success "User added to docker group (logout required for changes)"
+        fi
+    else
+        print_would_execute "sudo systemctl enable docker"
+        print_would_execute "sudo systemctl start docker"
+        print_would_execute "sudo usermod -aG docker $USER"
+    fi
     
     return 0
 }

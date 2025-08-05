@@ -280,16 +280,34 @@ add_apt_repository() {
     local temp_key_file="/tmp/$(basename "$list_file" .list)-key.gpg"
     
     print_status "Downloading GPG key for $description..."
-    if wget -qO "$temp_key_file" "$repo_key_url" 2>/dev/null; then
+    # Try with curl first, then wget
+    if curl -fsSL "$repo_key_url" -o "$temp_key_file" 2>/dev/null || wget -qO "$temp_key_file" "$repo_key_url" 2>/dev/null; then
         print_status "Installing GPG key for $description..."
-        if sudo gpg --dearmor -o "$keyring_file" "$temp_key_file" 2>/dev/null; then
-            # Clean up temporary file
-            rm -f "$temp_key_file"
-            
-            # Validate repository line format
-            if [[ "$repo_line" =~ ^deb.*\[.*signed-by=.*\].*$ ]]; then
-                print_status "Adding repository configuration..."
-                echo "$repo_line" | sudo tee "$list_file" > /dev/null
+        
+        # Check if key is already in armor format or binary
+        if file "$temp_key_file" | grep -q "PGP public key"; then
+            # Already in binary format
+            sudo cp "$temp_key_file" "$keyring_file"
+        else
+            # Need to dearmor
+            if sudo gpg --dearmor -o "$keyring_file" < "$temp_key_file" 2>/dev/null; then
+                print_success "GPG key installed for $description"
+            else
+                # Try alternative method
+                cat "$temp_key_file" | sudo gpg --dearmor | sudo tee "$keyring_file" > /dev/null
+            fi
+        fi
+        
+        # Set proper permissions
+        sudo chmod 644 "$keyring_file"
+        
+        # Clean up temporary file
+        rm -f "$temp_key_file"
+        
+        # Validate repository line format
+        if [[ "$repo_line" =~ ^deb.*\[.*signed-by=.*\].*$ ]]; then
+            print_status "Adding repository configuration..."
+            echo "$repo_line" | sudo tee "$list_file" > /dev/null
                 
                 # Update package lists with detailed error handling
                 print_status "Updating package lists..."

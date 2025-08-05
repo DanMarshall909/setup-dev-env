@@ -5,12 +5,12 @@ A comprehensive, automated setup script for Linux development environments with 
 ## 🚀 Quick Start (One-liner)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/danmarshall909/setup-dev-env/master/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/danmarshall909/setup-dev-env/master/install.sh | bash
 ```
 
 **Preview what would be installed (dry-run):**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/danmarshall909/setup-dev-env/master/setup.sh | bash -s -- --dry-run
+curl -fsSL https://raw.githubusercontent.com/danmarshall909/setup-dev-env/master/install.sh | bash -s -- --dry-run
 ```
 
 ## 📋 What Gets Installed

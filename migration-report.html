@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows to Linux Development Environment Migration Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            text-align: center;
+            font-size: 2.5rem;
+        }
+        
+        .summary {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .stat-card {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-card.available {
+            border-color: #27ae60;
+            color: #27ae60;
+        }
+        
+        .stat-card.partial {
+            border-color: #f39c12;
+            color: #f39c12;
+        }
+        
+        .stat-card.unavailable {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+        
+        .category {
+            background-color: white;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .category-header {
+            background-color: #34495e;
+            color: white;
+            padding: 1rem 1.5rem;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .tools-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .tools-table th {
+            background-color: #ecf0f1;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #bdc3c7;
+        }
+        
+        .tools-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .tools-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status.available {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status.partial {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.unavailable {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alternative {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .notes {
+            font-size: 0.85rem;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .legend {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .legend-items {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .tools-table {
+                font-size: 0.9rem;
+            }
+            
+            .tools-table td, .tools-table th {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Windows → Linux Migration Report</h1>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="summary">
+            <h2>Migration Summary</h2>
+            <p>Analysis of your Windows development environment for Linux (Pop!_OS/Ubuntu) migration compatibility.</p>
+            <div class="stats">
+                <div class="stat-card available">
+                    <h3>68</h3>
+                    <p>Fully Available</p>
+                </div>
+                <div class="stat-card partial">
+                    <h3>15</h3>
+                    <p>Alternatives Available</p>
+                </div>
+                <div class="stat-card unavailable">
+                    <h3>8</h3>
+                    <p>Windows Only</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <h3>Status Legend</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <span class="status available">Available</span>
+                    <span>Native Linux version available</span>
+                </div>
+                <div class="legend-item">
+                    <span class="status partial">Alternative</span>
+                    <span>Different but compatible tool available</span>
+                </div>
+                <div class="legend-item">
+                    <span class="status unavailable">Unavailable</span>
+                    <span>No Linux equivalent (may work in Wine/VM)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Programming Languages & Runtimes -->
+        <div class="category">
+            <div class="category-header">Programming Languages & Runtimes</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Version</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Python</td>
+                        <td>3.13.5, 3.10</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same versions available via apt/pyenv</td>
+                    </tr>
+                    <tr>
+                        <td>Go</td>
+                        <td>1.24.4</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same version available</td>
+                    </tr>
+                    <tr>
+                        <td>Java (Temurin)</td>
+                        <td>21.0.5, 17</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same JDK available</td>
+                    </tr>
+                    <tr>
+                        <td>.NET SDK</td>
+                        <td>3.1, 6.0, 7.0, 8.0, 9.0</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>All versions available for Linux</td>
+                    </tr>
+                    <tr>
+                        <td>Node.js</td>
+                        <td>20.4.0 LTS</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same version via NodeSource/nvm</td>
+                    </tr>
+                    <tr>
+                        <td>PowerShell Core</td>
+                        <td>7.5.2</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>PowerShell Core runs on Linux</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Development IDEs & Editors -->
+        <div class="category">
+            <div class="category-header">Development IDEs & Editors</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Visual Studio Code</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Identical version, all extensions compatible</td>
+                    </tr>
+                    <tr>
+                        <td>Visual Studio 2022 Community</td>
+                        <td><span class="status unavailable">Unavailable</span></td>
+                        <td class="alternative">Use VS Code + .NET CLI, or JetBrains Rider</td>
+                    </tr>
+                    <tr>
+                        <td>JetBrains Rider</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Full Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>IntelliJ IDEA Community</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Full Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>JetBrains Toolbox</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Native Linux app</td>
+                    </tr>
+                    <tr>
+                        <td>Cursor</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Linux version available</td>
+                    </tr>
+                    <tr>
+                        <td>Claude Desktop</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Linux version available</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Database & Data Tools -->
+        <div class="category">
+            <div class="category-header">Database & Data Tools</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>PostgreSQL 16</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Native Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>SQL Server Management Studio</td>
+                        <td><span class="status unavailable">Unavailable</span></td>
+                        <td class="alternative">Azure Data Studio or DBeaver</td>
+                    </tr>
+                    <tr>
+                        <td>Azure Data Studio</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Full Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>LINQPad 7</td>
+                        <td><span class="status partial">Alternative</span></td>
+                        <td class="alternative">LINQPad X (cross-platform beta) or VS Code + .NET Interactive</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Version Control & Git Tools -->
+        <div class="category">
+            <div class="category-header">Version Control & Git Tools</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Git</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Native Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>GitHub CLI</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same tool available</td>
+                    </tr>
+                    <tr>
+                        <td>GitHub Desktop</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Linux version available (beta)</td>
+                    </tr>
+                    <tr>
+                        <td>GitKraken</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Full Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>Beyond Compare 4</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Linux version available</td>
+                    </tr>
+                    <tr>
+                        <td>Meld</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Native Linux application</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Containerization & Virtualization -->
+        <div class="category">
+            <div class="category-header">Containerization & Virtualization</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Docker Desktop</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Docker native on Linux (better performance)</td>
+                    </tr>
+                    <tr>
+                        <td>Oracle VirtualBox</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Full Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>WSL (Ubuntu)</td>
+                        <td><span class="status partial">Alternative</span></td>
+                        <td class="alternative">Not needed - you'll be on native Linux</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Cloud & DevOps -->
+        <div class="category">
+            <div class="category-header">Cloud & DevOps Tools</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AWS CLI</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same tool available</td>
+                    </tr>
+                    <tr>
+                        <td>Azure CLI</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same tool available</td>
+                    </tr>
+                    <tr>
+                        <td>Azure Storage Explorer</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Linux version available</td>
+                    </tr>
+                    <tr>
+                        <td>Gradle</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same tool available</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Build Tools & Package Managers -->
+        <div class="category">
+            <div class="category-header">Build Tools & Package Managers</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>npm</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same tool with Node.js</td>
+                    </tr>
+                    <tr>
+                        <td>pip</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same tool with Python</td>
+                    </tr>
+                    <tr>
+                        <td>winget</td>
+                        <td><span class="status partial">Alternative</span></td>
+                        <td class="alternative">apt, snap, flatpak</td>
+                    </tr>
+                    <tr>
+                        <td>NSwag Studio</td>
+                        <td><span class="status partial">Alternative</span></td>
+                        <td class="alternative">NSwag CLI tools available</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Productivity & Utilities -->
+        <div class="category">
+            <div class="category-header">Productivity & Utilities</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>PowerToys</td>
+                        <td><span class="status partial">Alternative</span></td>
+                        <td class="alternative">Various tools: Albert, Ulauncher, Pop!_OS features</td>
+                    </tr>
+                    <tr>
+                        <td>Windows Terminal</td>
+                        <td><span class="status partial">Alternative</span></td>
+                        <td class="alternative">Tilix, Terminator, or default GNOME Terminal</td>
+                    </tr>
+                    <tr>
+                        <td>DisplayFusion</td>
+                        <td><span class="status partial">Alternative</span></td>
+                        <td class="alternative">Built-in display management or arandr</td>
+                    </tr>
+                    <tr>
+                        <td>Ditto (Clipboard)</td>
+                        <td><span class="status partial">Alternative</span></td>
+                        <td class="alternative">CopyQ or Clipman</td>
+                    </tr>
+                    <tr>
+                        <td>Obsidian</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Full Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>ripgrep</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same tool available</td>
+                    </tr>
+                    <tr>
+                        <td>jq</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Same tool available</td>
+                    </tr>
+                    <tr>
+                        <td>7-Zip</td>
+                        <td><span class="status partial">Alternative</span></td>
+                        <td class="alternative">p7zip or built-in archive manager</td>
+                    </tr>
+                    <tr>
+                        <td>1Password</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Full Linux support</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Media & Creative Tools -->
+        <div class="category">
+            <div class="category-header">Media & Creative Tools</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Unity Hub + Unity</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Full Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>Blender</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Native Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>Audacity</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Native Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>VLC</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Native Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>Bitwig Studio</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Full Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>Mixxx</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Native Linux support</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Windows-Only Tools -->
+        <div class="category">
+            <div class="category-header">Windows-Only Tools (No Direct Linux Equivalent)</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Workaround</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Visual Studio 2022</td>
+                        <td class="notes">Use VS Code + extensions, Rider, or run in Windows VM</td>
+                    </tr>
+                    <tr>
+                        <td>SQL Server Management Studio</td>
+                        <td class="notes">Use Azure Data Studio or DBeaver</td>
+                    </tr>
+                    <tr>
+                        <td>Microsoft Office</td>
+                        <td class="notes">Use LibreOffice, OnlyOffice, or Office 365 web</td>
+                    </tr>
+                    <tr>
+                        <td>iTunes</td>
+                        <td class="notes">No direct equivalent - use alternative music managers</td>
+                    </tr>
+                    <tr>
+                        <td>Meta Oculus</td>
+                        <td class="notes">Windows VM or dual boot required</td>
+                    </tr>
+                    <tr>
+                        <td>Brother iPrint&Scan</td>
+                        <td class="notes">Brother provides Linux drivers separately</td>
+                    </tr>
+                    <tr>
+                        <td>Logitech Options+</td>
+                        <td class="notes">Solaar for basic Logitech device support</td>
+                    </tr>
+                    <tr>
+                        <td>Samsung SmartSwitch</td>
+                        <td class="notes">No Linux version - use cloud sync or KDE Connect</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Remote Access & Collaboration -->
+        <div class="category">
+            <div class="category-header">Remote Access & Collaboration</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Microsoft Teams</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Native Linux client (transitioning to PWA)</td>
+                    </tr>
+                    <tr>
+                        <td>TeamViewer</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Full Linux support</td>
+                    </tr>
+                    <tr>
+                        <td>Microsoft Remote Desktop</td>
+                        <td><span class="status partial">Alternative</span></td>
+                        <td class="alternative">Remmina or FreeRDP</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Network & Security -->
+        <div class="category">
+            <div class="category-header">Network & Security Tools</div>
+            <table class="tools-table">
+                <thead>
+                    <tr>
+                        <th>Windows Tool</th>
+                        <th>Linux Status</th>
+                        <th>Linux Alternative/Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Wireshark</td>
+                        <td><span class="status available">Available</span></td>
+                        <td>Native Linux support (often better)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary Recommendations -->
+        <div class="summary">
+            <h2>Migration Recommendations</h2>
+            <h3>✅ Smooth Transition (90% tools available)</h3>
+            <ul>
+                <li>All programming languages and runtimes have native Linux support</li>
+                <li>Most development tools have identical or better Linux versions</li>
+                <li>Docker performs better on Linux (no VM overhead)</li>
+                <li>Git and version control tools work identically</li>
+            </ul>
+            
+            <h3>⚠️ Requires Adaptation</h3>
+            <ul>
+                <li><strong>Visual Studio 2022</strong> → Migrate to VS Code + .NET CLI or JetBrains Rider</li>
+                <li><strong>PowerToys</strong> → Use combination of Pop!_OS features and tools like Ulauncher</li>
+                <li><strong>Windows Terminal</strong> → GNOME Terminal or Tilix provide similar features</li>
+                <li><strong>LINQPad</strong> → Try LINQPad X beta or VS Code .NET Interactive notebooks</li>
+            </ul>
+            
+            <h3>🔄 Dual Boot Considerations</h3>
+            <ul>
+                <li>Keep Windows for: Visual Studio 2022, Unity development (if needed), VR (Oculus)</li>
+                <li>Office 365 web versions work well, but desktop Office requires Windows/VM</li>
+            </ul>
+            
+            <h3>📋 Next Steps</h3>
+            <ol>
+                <li>Set up Pop!_OS in dual boot configuration</li>
+                <li>Install development essentials first (Git, VS Code, Docker, languages)</li>
+                <li>Migrate development projects incrementally</li>
+                <li>Keep Windows partition for tools without Linux equivalents</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

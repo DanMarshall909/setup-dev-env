@@ -1,0 +1,44 @@
+{
+  "name": "rider",
+  "description": "JetBrains Rider IDE for .NET and cross-platform development",
+  "version": "1.0.0",
+  "category": "ide",
+  "tags": ["jetbrains", "rider", "ide", "dotnet", "csharp"],
+  "dependencies": [],
+  "conflicts": [],
+  "provides": ["rider"],
+  "platforms": ["ubuntu", "debian"],
+  "min_os_version": "18.04",
+  "check_installed": "snap list rider 2>/dev/null | grep -q rider || command -v rider >/dev/null",
+  "get_version": "snap list rider 2>/dev/null | grep rider | awk '{print $2}' || echo 'unknown'",
+  "size_estimate": "1.2GB",
+  "install_time_estimate": "5-10 minutes",
+  "post_install_actions": [
+    "Launch Rider from applications menu",
+    "Sign in with JetBrains account for license",
+    "Configure plugins and settings"
+  ],
+  "documentation": {
+    "homepage": "https://www.jetbrains.com/rider/",
+    "docs": "https://www.jetbrains.com/help/rider/",
+    "config_files": [
+      "~/.config/JetBrains/Rider*/",
+      "~/.local/share/JetBrains/Toolbox/"
+    ]
+  },
+  "secrets": [
+    {
+      "name": "jetbrains_license",
+      "description": "JetBrains license key or account",
+      "required": false,
+      "env_var": "JETBRAINS_LICENSE"
+    }
+  ],
+  "alternatives": [
+    {
+      "method": "toolbox",
+      "description": "Install via JetBrains Toolbox for better management",
+      "url": "https://www.jetbrains.com/toolbox-app/"
+    }
+  ]
+}

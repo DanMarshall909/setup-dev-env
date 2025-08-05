@@ -1,0 +1,27 @@
+{
+  "name": "docker",
+  "description": "Container platform for development and deployment",
+  "version": "1.0.0",
+  "category": "containerization",
+  "tags": ["docker", "containerization"],
+  "dependencies": [],
+  "conflicts": [],
+  "provides": ["docker"],
+  "platforms": ["ubuntu", "debian"],
+  "min_os_version": "18.04",
+  "check_installed": "command -v docker >/dev/null",
+  "get_version": "docker --version 2>/dev/null | head -n1 || echo 'unknown'",
+  "size_estimate": "Unknown",
+  "install_time_estimate": "2-5 minutes",
+  "post_install_actions": [
+    "Configure Docker settings",
+    "Verify installation"
+  ],
+  "documentation": {
+    "homepage": "https://example.com",
+    "docs": "https://example.com/docs",
+    "config_files": [
+      "~/.config/docker/"
+    ]
+  }
+}

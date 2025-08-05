@@ -1,0 +1,27 @@
+{
+  "name": "dev-tools",
+  "description": "Common development utilities and tools",
+  "version": "1.0.0",
+  "category": "utilities",
+  "tags": ["dev-tools", "utilities"],
+  "dependencies": [],
+  "conflicts": [],
+  "provides": ["dev-tools"],
+  "platforms": ["ubuntu", "debian"],
+  "min_os_version": "18.04",
+  "check_installed": "command -v dev-tools >/dev/null",
+  "get_version": "dev-tools --version 2>/dev/null | head -n1 || echo 'unknown'",
+  "size_estimate": "Unknown",
+  "install_time_estimate": "2-5 minutes",
+  "post_install_actions": [
+    "Configure Development Tools settings",
+    "Verify installation"
+  ],
+  "documentation": {
+    "homepage": "https://example.com",
+    "docs": "https://example.com/docs",
+    "config_files": [
+      "~/.config/dev-tools/"
+    ]
+  }
+}

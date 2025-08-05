@@ -6,7 +6,14 @@
       "Bash(./setup.sh:*)",
       "Bash(bash:*)",
       "Bash(./scripts/module-manager.sh tree:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(./install.sh:*)",
+      "Bash(git push:*)",
+      "Bash(find:*)",
+      "Bash(./scripts/create-module.sh:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

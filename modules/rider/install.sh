@@ -48,10 +48,24 @@ install_rider_ide() {
     print_status "Installing JetBrains Rider..."
     
     if is_dry_run; then
-        print_would_install "snapd" "Snap package manager"
-        print_would_execute "sudo snap install rider --classic"
+        print_would_execute "Download and install JetBrains Toolbox"
+        print_would_execute "sudo snap install rider --classic (fallback)"
         return 0
     fi
+    
+    # Try Toolbox first (more reliable)
+    print_status "Attempting JetBrains Toolbox installation (primary method)..."
+    if install_rider_toolbox_method; then
+        return 0
+    fi
+    
+    # Fallback to snap if Toolbox fails
+    print_warning "Toolbox installation failed, trying snap as fallback..."
+    install_rider_snap_method
+}
+
+install_rider_snap_method() {
+    print_status "Installing JetBrains Rider via snap..."
     
     # Ensure snap is available
     if ! command_exists snap; then
@@ -69,19 +83,18 @@ install_rider_ide() {
         fi
     fi
     
-    # Install Rider via snap
-    print_status "Installing JetBrains Rider via snap..."
-    if sudo snap install rider --classic; then
-        print_success "JetBrains Rider installed successfully"
+    # Install Rider via snap with timeout
+    if timeout 300 sudo snap install rider --classic; then
+        print_success "JetBrains Rider installed successfully via snap"
+        return 0
     else
-        print_error "Failed to install JetBrains Rider via snap"
-        print_status "Attempting alternative installation method..."
-        install_rider_toolbox_method
+        print_error "Failed to install JetBrains Rider via snap (timeout or error)"
+        return 1
     fi
 }
 
 install_rider_toolbox_method() {
-    print_status "Installing JetBrains Toolbox as alternative..."
+    print_status "Installing JetBrains Toolbox..."
     
     if is_dry_run; then
         print_would_execute "Download JetBrains Toolbox from official website"
@@ -90,11 +103,12 @@ install_rider_toolbox_method() {
     fi
     
     # Download and install Toolbox
-    local toolbox_url="https://download.jetbrains.com/toolbox/jetbrains-toolbox-1.28.1.15219.tar.gz"
+    local toolbox_url="https://download.jetbrains.com/toolbox/jetbrains-toolbox-1.29.3.15219.tar.gz"
     local temp_dir=$(mktemp -d)
     
     print_status "Downloading JetBrains Toolbox..."
-    if wget -q "$toolbox_url" -O "$temp_dir/toolbox.tar.gz"; then
+    # Try curl first, then wget
+    if curl -fsSL "$toolbox_url" -o "$temp_dir/toolbox.tar.gz" || wget -q "$toolbox_url" -O "$temp_dir/toolbox.tar.gz"; then
         cd "$temp_dir"
         tar -xzf toolbox.tar.gz
         

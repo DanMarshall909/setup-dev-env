@@ -85,9 +85,9 @@ install_claude_code_cli() {
     # Install via npm with proper PATH
     print_status "Installing Claude Code CLI via npm..."
     
-    if npm install -g @anthropic/claude-code; then
+    if npm install -g @anthropic-ai/claude-code; then
         print_success "Claude Code CLI installed successfully"
-        log_package_operation "install" "@anthropic/claude-code" "global"
+        log_package_operation "install" "@anthropic-ai/claude-code" "global"
         
         # Create symlink if needed
         if [ -f ~/.npm-global/bin/claude-code ] && [ ! -f /usr/local/bin/claude-code ]; then
@@ -99,18 +99,18 @@ install_claude_code_cli() {
         
         # Try alternative installation method
         print_status "Trying alternative installation method..."
-        if timeout 30 npx @anthropic/claude-code --version &>/dev/null; then
+        if timeout 30 npx @anthropic-ai/claude-code --version &>/dev/null; then
             print_success "Claude Code available via npx"
             # Create wrapper script
             cat > ~/.local/bin/claude-code << 'EOF'
 #!/bin/bash
-exec npx @anthropic/claude-code "$@"
+exec npx @anthropic-ai/claude-code "$@"
 EOF
             chmod +x ~/.local/bin/claude-code
             print_success "Created claude-code wrapper script"
         else
             print_warning "npx method also failed - Claude Code CLI not available"
-            print_status "You can install manually with: npm install -g @anthropic/claude-code"
+            print_status "You can install manually with: npm install -g @anthropic-ai/claude-code"
             return 1
         fi
     fi

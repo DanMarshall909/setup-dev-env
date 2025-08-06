@@ -164,15 +164,18 @@ configure_npm_auth() {
     local env_var=$(echo "$secret_config" | jq -r '.env_var')
     local field=$(echo "$secret_config" | jq -r '.field')
     
-    local npm_token=$(get_secret_or_env "$secret_path" "$env_var" "$field")
+    local npm_token=$(get_secret_or_env "$secret_path" "$env_var" "$field" 2>/dev/null)
     
-    if [ -n "$npm_token" ]; then
+    # Validate token - should not contain warning messages or be empty
+    if [ -n "$npm_token" ] && [[ ! "$npm_token" == *"WARNING"* ]] && [[ ! "$npm_token" == *"not available"* ]]; then
         print_status "Configuring npm authentication..."
         npm config set //registry.npmjs.org/:_authToken "$npm_token"
         log_config_change "npm" "auth_token" "" "<masked>"
         print_success "npm authentication configured"
     else
         print_status "npm token not configured (will use public packages only)"
+        # Clear any invalid token that might be set
+        npm config delete //registry.npmjs.org/:_authToken 2>/dev/null || true
     fi
 }
 

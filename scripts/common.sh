@@ -16,6 +16,32 @@ run_sudo() {
     fi
 }
 
+# Cleanup sensitive environment variables and bash history
+cleanup_sudo_password() {
+    if [ -n "$SUDO_PASSWORD" ]; then
+        print_status "Cleaning up sensitive environment variables and history..."
+        
+        # Clear environment variable
+        unset SUDO_PASSWORD
+        export SUDO_PASSWORD=""
+        
+        # Remove from current bash history (if interactive)
+        if [ -n "$BASH" ] && [ "$BASH" != "/bin/sh" ]; then
+            # Remove entries containing SUDO_PASSWORD from current session
+            history -d $(history | grep -n "SUDO_PASSWORD" | cut -d: -f1 | tail -1) 2>/dev/null || true
+            
+            # Clear from history file if it exists
+            if [ -f "$HOME/.bash_history" ]; then
+                # Create temporary file without SUDO_PASSWORD entries
+                grep -v "SUDO_PASSWORD" "$HOME/.bash_history" > "$HOME/.bash_history.tmp" 2>/dev/null || true
+                mv "$HOME/.bash_history.tmp" "$HOME/.bash_history" 2>/dev/null || true
+            fi
+        fi
+        
+        log_info "SUDO_PASSWORD environment variable and history entries cleared"
+    fi
+}
+
 # Get the root directory of the setup project
 get_root_dir() {
     echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"

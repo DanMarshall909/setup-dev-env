@@ -91,6 +91,9 @@ run_automated_setup() {
     # Generate summary
     generate_setup_summary "$DURATION"
     
+    # Clean up sensitive environment variables
+    cleanup_sudo_password
+    
     log_script_end "run-all.sh" 0 "$DURATION"
 }
 

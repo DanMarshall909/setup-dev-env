@@ -173,4 +173,20 @@ else
     echo ""
     echo -e "${GREEN}[SUCCESS]${NC} Setup installer completed!"
     echo "Repository installed at: $INSTALL_DIR"
+    
+    # Clean up sensitive environment variables and history
+    if [ -n "$SUDO_PASSWORD" ]; then
+        echo -e "${BLUE}[INFO]${NC} Cleaning up sensitive environment variables and history..."
+        unset SUDO_PASSWORD
+        export SUDO_PASSWORD=""
+        
+        # Remove from bash history if possible
+        if [ -n "$BASH" ] && [ "$BASH" != "/bin/sh" ]; then
+            history -d $(history | grep -n "SUDO_PASSWORD" | cut -d: -f1 | tail -1) 2>/dev/null || true
+            if [ -f "$HOME/.bash_history" ]; then
+                grep -v "SUDO_PASSWORD" "$HOME/.bash_history" > "$HOME/.bash_history.tmp" 2>/dev/null || true
+                mv "$HOME/.bash_history.tmp" "$HOME/.bash_history" 2>/dev/null || true
+            fi
+        fi
+    fi
 fi

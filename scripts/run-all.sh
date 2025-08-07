@@ -218,7 +218,7 @@ cleanup_temp_files() {
     print_status "Cleaning up temporary files..."
     
     # Clean apt cache
-    sudo apt-get clean
+    run_sudo apt-get clean
     
     # Remove old log files (keep last 10)
     rotate_logs

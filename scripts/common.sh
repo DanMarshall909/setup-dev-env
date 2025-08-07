@@ -7,6 +7,15 @@ COMMON_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd 
 source "$COMMON_SCRIPT_DIR/logging.sh"
 source "$COMMON_SCRIPT_DIR/security.sh"
 
+# Sudo wrapper function that handles password from environment
+run_sudo() {
+    if [ -n "$SUDO_PASSWORD" ]; then
+        echo "$SUDO_PASSWORD" | sudo -S "$@"
+    else
+        sudo "$@"
+    fi
+}
+
 # Get the root directory of the setup project
 get_root_dir() {
     echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
@@ -135,13 +144,13 @@ update_repositories() {
     local package_manager=$(get_setting '.system.package_manager')
     
     if is_dry_run; then
-        print_would_execute "sudo $package_manager update"
+        print_would_execute "run_sudo $package_manager update"
         return 0
     fi
     
     # Capture output for error analysis
     local update_output
-    if update_output=$(sudo $package_manager update 2>&1); then
+    if update_output=$(run_sudo $package_manager update 2>&1); then
         print_success "Package repositories updated successfully"
         return 0
     else
@@ -180,7 +189,7 @@ install_package() {
     if is_dry_run; then
         # In dry-run mode, simulate the check and installation
         print_would_install "$package" "$package_name"
-        print_would_execute "sudo $package_manager install -y $package"
+        print_would_execute "run_sudo $package_manager install -y $package"
         log_package_operation "dry-run" "$package" "simulated"
         log_function_end "install_package" 0
         return 0
@@ -191,7 +200,7 @@ install_package() {
         log_package_operation "check" "$package" "already installed"
     else
         print_status "$(get_message 'installing' "$package_name")"
-        if sudo $package_manager install -y "$package"; then
+        if run_sudo $package_manager install -y "$package"; then
             print_success "$(get_message 'installed_successfully' "$package_name")"
             local version=$(dpkg -l | grep "^ii  $package " | awk '{print $3}')
             log_package_operation "install" "$package" "$version"

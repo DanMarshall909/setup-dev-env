@@ -17,11 +17,11 @@ install_node() {
     
     # Update npm to latest
     print_status "Updating npm to latest version..."
-    sudo npm install -g npm@latest
+    run_sudo npm install -g npm@latest
     
     # Install global TypeScript tools
     print_status "Installing TypeScript and global tools..."
-    sudo npm install -g typescript ts-node nodemon prettier eslint
+    run_sudo npm install -g typescript ts-node nodemon prettier eslint
     
     # Show versions
     print_success "Node.js installation complete:"

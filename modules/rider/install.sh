@@ -67,6 +67,11 @@ install_rider_ide() {
 install_rider_snap_method() {
     print_status "Installing JetBrains Rider via snap..."
     
+    if is_dry_run; then
+        print_would_execute "sudo snap install rider --classic"
+        return 0
+    fi
+    
     # Ensure snap is available
     if ! command_exists snap; then
         print_status "Installing snap package manager..."
@@ -102,8 +107,8 @@ install_rider_toolbox_method() {
         return 0
     fi
     
-    # Download and install Toolbox
-    local toolbox_url="https://download.jetbrains.com/toolbox/jetbrains-toolbox-1.29.3.15219.tar.gz"
+    # Download and install Toolbox - updated URL to latest stable version
+    local toolbox_url="https://download.jetbrains.com/toolbox/jetbrains-toolbox-2.5.1.34629.tar.gz"
     local temp_dir=$(mktemp -d)
     
     print_status "Downloading JetBrains Toolbox..."
@@ -117,8 +122,17 @@ install_rider_toolbox_method() {
         
         if [ -n "$toolbox_dir" ]; then
             # Move to opt and create symlink
-            sudo mv "$toolbox_dir" /opt/jetbrains-toolbox
-            sudo ln -sf /opt/jetbrains-toolbox/jetbrains-toolbox /usr/local/bin/jetbrains-toolbox
+            if [ -w /opt ]; then
+                mv "$toolbox_dir" /opt/jetbrains-toolbox
+            else
+                sudo mv "$toolbox_dir" /opt/jetbrains-toolbox
+            fi
+            
+            if [ -w /usr/local/bin ]; then
+                ln -sf /opt/jetbrains-toolbox/jetbrains-toolbox /usr/local/bin/jetbrains-toolbox
+            else
+                sudo ln -sf /opt/jetbrains-toolbox/jetbrains-toolbox /usr/local/bin/jetbrains-toolbox
+            fi
             
             print_success "JetBrains Toolbox installed"
             print_status "Launch Toolbox to install Rider: jetbrains-toolbox"

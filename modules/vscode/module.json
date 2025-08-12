@@ -1,0 +1,64 @@
+{
+  "name": "vscode",
+  "description": "Visual Studio Code editor with essential extensions",
+  "version": "1.0.0",
+  "category": "editor",
+  "tags": ["vscode", "editor", "microsoft", "development", "ide"],
+  "dependencies": [],
+  "conflicts": [],
+  "provides": ["code"],
+  "platforms": ["ubuntu", "debian"],
+  "min_os_version": "18.04",
+  "check_installed": "command -v code >/dev/null",
+  "get_version": "code --version | head -n1",
+  "size_estimate": "200MB",
+  "install_time_estimate": "3-5 minutes",
+  "post_install_actions": [
+    "Launch VS Code from applications menu or run: code",
+    "Install additional extensions as needed",
+    "Configure settings and preferences",
+    "Sign in to Settings Sync (optional)"
+  ],
+  "documentation": {
+    "homepage": "https://code.visualstudio.com/",
+    "docs": "https://code.visualstudio.com/docs",
+    "config_files": [
+      "~/.config/Code/User/settings.json",
+      "~/.config/Code/User/keybindings.json",
+      "~/.vscode/extensions/"
+    ]
+  },
+  "secrets": [],
+  "extensions": [
+    {
+      "id": "ms-dotnettools.csharp",
+      "name": "C# Dev Kit",
+      "description": "C# language support and debugging"
+    },
+    {
+      "id": "esbenp.prettier-vscode",
+      "name": "Prettier",
+      "description": "Code formatter for JavaScript, TypeScript, CSS"
+    },
+    {
+      "id": "ms-vscode.eslint", 
+      "name": "ESLint",
+      "description": "JavaScript linting support"
+    },
+    {
+      "id": "eamodio.gitlens",
+      "name": "GitLens",
+      "description": "Enhanced Git capabilities"
+    },
+    {
+      "id": "ms-vscode-remote.remote-ssh",
+      "name": "Remote - SSH",
+      "description": "Remote development over SSH"
+    },
+    {
+      "id": "ms-azuretools.vscode-docker",
+      "name": "Docker",
+      "description": "Docker container support"
+    }
+  ]
+}

@@ -308,37 +308,31 @@ add_apt_repository() {
         if [[ "$repo_line" =~ ^deb.*\[.*signed-by=.*\].*$ ]]; then
             print_status "Adding repository configuration..."
             echo "$repo_line" | sudo tee "$list_file" > /dev/null
-                
-                # Update package lists with detailed error handling
-                print_status "Updating package lists..."
-                local apt_output
-                if apt_output=$(sudo apt update 2>&1); then
-                    print_success "$description added successfully"
-                    log_info "Successfully updated package lists after adding $description"
-                    return 0
-                else
-                    # Check if it's just warnings or actual errors
-                    if echo "$apt_output" | grep -q "^E:"; then
-                        print_error "$description added but apt update failed"
-                        log_error_details "Repository Setup" "apt update failed after adding $description: $apt_output"
-                        # Remove the problematic repository
-                        sudo rm -f "$list_file"
-                        return 1
-                    else
-                        print_warning "$description added but apt update had warnings"
-                        log_warning "Added $description repository with APT warnings"
-                        return 0
-                    fi
-                fi
+            
+            # Update package lists with detailed error handling
+            print_status "Updating package lists..."
+            local apt_output
+            if apt_output=$(sudo apt update 2>&1); then
+                print_success "$description added successfully"
+                log_info "Successfully updated package lists after adding $description"
+                return 0
             else
-                print_error "Invalid repository line format for $description"
-                log_error_details "Repository Setup" "Invalid repository line format: $repo_line"
-                rm -f "$temp_key_file"
-                return 1
+                # Check if it's just warnings or actual errors
+                if echo "$apt_output" | grep -q "^E:"; then
+                    print_error "$description added but apt update failed"
+                    log_error_details "Repository Setup" "apt update failed after adding $description: $apt_output"
+                    # Remove the problematic repository
+                    sudo rm -f "$list_file"
+                    return 1
+                else
+                    print_warning "$description added but apt update had warnings"
+                    log_warning "Added $description repository with APT warnings"
+                    return 0
+                fi
             fi
         else
-            print_error "Failed to install GPG key for $description"
-            log_error_details "Repository Setup" "Failed to dearmor GPG key for $description"
+            print_error "Invalid repository line format for $description"
+            log_error_details "Repository Setup" "Invalid repository line format: $repo_line"
             rm -f "$temp_key_file"
             return 1
         fi

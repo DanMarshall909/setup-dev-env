@@ -91,6 +91,7 @@ is_module_installed() {
         if "$status_script" installed &>/dev/null; then
             return 0
         fi
+        return 1
     fi
     
     # Fallback to config check_installed command
@@ -218,33 +219,34 @@ install_module() {
         echo ""
     fi
     
-    while IFS= read -r module; do
+    local install_item
+    while IFS= read -r install_item; do
         current=$((current + 1))
         
-        if [ "${INSTALLED_MODULES[$module]}" = "true" ]; then
+        if [ "${INSTALLED_MODULES[$install_item]}" = "true" ]; then
             if is_dry_run; then
-                print_status "[$current/$total_modules] Would skip $module (already installed)"
+                print_status "[$current/$total_modules] Would skip $install_item (already installed)"
             else
-                print_status "[$current/$total_modules] Skipping $module (already installed)"
+                print_status "[$current/$total_modules] Skipping $install_item (already installed)"
             fi
             continue
         fi
         
         if is_dry_run; then
-            print_status "[$current/$total_modules] Would install $module..."
-            print_would_execute "install_single_module $module"
-            INSTALLED_MODULES[$module]="true"
-            print_success "[$current/$total_modules] Module '$module' would be installed successfully"
+            print_status "[$current/$total_modules] Would install $install_item..."
+            print_would_execute "install_single_module $install_item"
+            INSTALLED_MODULES[$install_item]="true"
+            print_success "[$current/$total_modules] Module '$install_item' would be installed successfully"
         else
-            print_status "[$current/$total_modules] Installing $module..."
+            print_status "[$current/$total_modules] Installing $install_item..."
             
-            if install_single_module "$module"; then
-                INSTALLED_MODULES[$module]="true"
-                print_success "[$current/$total_modules] Module '$module' installed successfully"
-                log_info "Module installed successfully: $module"
+            if install_single_module "$install_item"; then
+                INSTALLED_MODULES[$install_item]="true"
+                print_success "[$current/$total_modules] Module '$install_item' installed successfully"
+                log_info "Module installed successfully: $install_item"
             else
-                print_error "[$current/$total_modules] Failed to install module: $module"
-                log_error "Failed to install module: $module"
+                print_error "[$current/$total_modules] Failed to install module: $install_item"
+                log_error "Failed to install module: $install_item"
                 return 1
             fi
         fi

@@ -76,17 +76,28 @@ install_rider_snap_method() {
     # Ensure snap is available
     if ! command_exists snap; then
         print_status "Installing snap package manager..."
-        install_package "snapd" "Snap"
+        if ! install_package "snapd" "Snap"; then
+            if [ -f /etc/apt/preferences.d/nosnap.pref ]; then
+                print_warning "Linux Mint blocks snapd via /etc/apt/preferences.d/nosnap.pref"
+                print_status "To use snap-based Rider install, remove that preference and rerun: sudo rm /etc/apt/preferences.d/nosnap.pref && sudo apt update"
+            fi
+            return 1
+        fi
         
         # Snap requires a restart of systemd services
         print_status "Enabling snap services..."
-        sudo systemctl enable snapd
-        sudo systemctl start snapd
+        sudo systemctl enable snapd || return 1
+        sudo systemctl start snapd || return 1
         
         # Create snap symlink if needed
         if [ ! -L /snap ]; then
             sudo ln -s /var/lib/snapd/snap /snap
         fi
+    fi
+
+    if ! command_exists snap; then
+        print_error "snap command is still unavailable after installing snapd"
+        return 1
     fi
     
     # Install Rider via snap with timeout

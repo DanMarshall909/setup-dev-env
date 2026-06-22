@@ -160,9 +160,11 @@ install_all_modules() {
     if [ ${#failed_modules[@]} -eq 0 ]; then
         print_success "All modules installed successfully!"
         log_system_info "Final Result" "All $total_count modules installed successfully"
+        return 0
     else
         print_warning "Some modules failed to install: ${failed_modules[*]}"
         log_system_info "Final Result" "$success_count/$total_count modules installed, failed: ${failed_modules[*]}"
+        return 1
     fi
 }
 

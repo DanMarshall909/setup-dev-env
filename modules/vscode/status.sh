@@ -45,7 +45,7 @@ check_vscode_status() {
                 local missing
                 missing=$(missing_vscode_extensions | tr '\n' ' ')
                 if [ -n "$missing" ]; then
-                    echo "❌ VS Code $version missing extensions: $missing"
+                    echo "⚠️  VS Code $version installed, missing extensions: $missing"
                 elif [ -n "$version" ]; then
                     echo "✅ VS Code $version"
                 else

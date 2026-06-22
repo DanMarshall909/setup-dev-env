@@ -20,8 +20,11 @@ declare -A DEV_TOOLS=(
     ["ncdu"]="ncdu - NCurses disk usage"
     ["duf"]="duf - Better df alternative"
     ["httpie"]="httpie - Modern HTTP client"
-    ["jless"]="jless - JSON viewer"
     ["yq"]="yq - YAML processor"
+)
+
+declare -A OPTIONAL_DEV_TOOLS=(
+    ["jless"]="jless - JSON viewer"
 )
 
 # Check if module is already installed
@@ -229,8 +232,13 @@ verify_dev_tools_installation() {
     verify_command_available "ncdu" "ncdu" && ((verified++)) || true
     verify_command_available "duf" "duf" && ((verified++)) || true
     verify_command_available "http" "httpie" && ((verified++)) || true
-    verify_command_available "jless" "jless" && ((verified++)) || true
     verify_command_available "yq" "yq" && ((verified++)) || true
+
+    if command -v jless &>/dev/null; then
+        verify_command_available "jless" "jless" || true
+    else
+        print_warning "Optional tool jless is not installed"
+    fi
     
     print_success "Development tools verified: $verified/$total installed"
     

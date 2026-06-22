@@ -15,8 +15,11 @@ DEV_TOOL_COMMANDS=(
     "ncdu:ncdu"
     "duf:duf"
     "httpie:http"
-    "jless:jless"
     "yq:yq"
+)
+
+OPTIONAL_DEV_TOOL_COMMANDS=(
+    "jless:jless"
 )
 
 missing_dev_tools() {
@@ -56,8 +59,8 @@ check_dev_tools_status() {
             for spec in "${DEV_TOOL_COMMANDS[@]}"; do
                 name="${spec%%:*}"
                 command_name="${spec#*:}"
-                local tool_installed=false
-                if command -v "$command_name" &>/dev/null; then
+            local tool_installed=false
+            if command -v "$command_name" &>/dev/null; then
                     tool_installed=true
                 else
                     installed=false
@@ -65,6 +68,17 @@ check_dev_tools_status() {
                     missing_json=$(echo "$missing_json" | jq --arg name "$name" '. + [$name]')
                 fi
                 tools_status=$(echo "$tools_status" | jq --arg name "$name" --arg command "$command_name" --argjson installed "$tool_installed" '.[$name] = {"command": $command, "installed": $installed}')
+            done
+
+            local optional_tools_status="{}"
+            for spec in "${OPTIONAL_DEV_TOOL_COMMANDS[@]}"; do
+                name="${spec%%:*}"
+                command_name="${spec#*:}"
+                local optional_installed=false
+                if command -v "$command_name" &>/dev/null; then
+                    optional_installed=true
+                fi
+                optional_tools_status=$(echo "$optional_tools_status" | jq --arg name "$name" --arg command "$command_name" --argjson installed "$optional_installed" '.[$name] = {"command": $command, "installed": $installed}')
             done
 
             local installed_count=$((${#DEV_TOOL_COMMANDS[@]} - missing_count))
@@ -81,6 +95,7 @@ check_dev_tools_status() {
   "installed_count": $installed_count,
   "total_count": ${#DEV_TOOL_COMMANDS[@]},
   "tools": $tools_status,
+  "optional_tools": $optional_tools_status,
   "missing_tools": $missing_json
 }
 EOFSTATUS

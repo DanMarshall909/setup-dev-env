@@ -125,7 +125,7 @@ print_error() {
     log_error "$message"
     
     # Pause on first error for debugging
-    if [ "${PAUSE_ON_ERROR:-true}" = "true" ]; then
+    if [ "${PAUSE_ON_ERROR:-false}" = "true" ] && [ -t 0 ]; then
         echo ""
         echo -e "${YELLOW}[DEBUG]${NC} Error encountered. Pausing for investigation..."
         echo -e "${YELLOW}[DEBUG]${NC} Error details: $message"

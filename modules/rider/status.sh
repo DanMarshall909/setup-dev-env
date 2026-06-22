@@ -27,6 +27,10 @@ check_rider_status() {
                 echo "✅ JetBrains Rider $version (snap)"
             elif command -v rider &>/dev/null; then
                 echo "✅ JetBrains Rider (installed)"
+            elif [ -f /etc/apt/preferences.d/nosnap.pref ] && command -v jetbrains-toolbox &>/dev/null; then
+                echo "❌ JetBrains Rider not installed (Toolbox available; Linux Mint blocks snapd)"
+            elif command -v jetbrains-toolbox &>/dev/null; then
+                echo "❌ JetBrains Rider not installed (Toolbox available)"
             else
                 echo "❌ JetBrains Rider not installed"
             fi
@@ -66,7 +70,8 @@ check_rider_status() {
   "command_available": $command_available,
   "config_directory": "$config_dir",
   "snap_installed": $(snap list rider 2>/dev/null | grep -q rider && echo true || echo false),
-  "toolbox_available": $(command -v jetbrains-toolbox &>/dev/null && echo true || echo false)
+  "toolbox_available": $(command -v jetbrains-toolbox &>/dev/null && echo true || echo false),
+  "snap_blocked_by_mint": $([ -f /etc/apt/preferences.d/nosnap.pref ] && echo true || echo false)
 }
 EOF
             ;;

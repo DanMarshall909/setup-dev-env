@@ -146,6 +146,110 @@ command_exists() {
     command -v "$1" &> /dev/null
 }
 
+get_os_release_value() {
+    local key="$1"
+    local os_release_file="${2:-/etc/os-release}"
+
+    if [ -f "$os_release_file" ]; then
+        awk -F= -v key="$key" '$1 == key { gsub(/^"|"$/, "", $2); print $2; exit }' "$os_release_file"
+    fi
+}
+
+ubuntu_codename_to_version() {
+    case "$1" in
+        noble) echo "24.04" ;;
+        jammy) echo "22.04" ;;
+        focal) echo "20.04" ;;
+        bionic) echo "18.04" ;;
+        *) return 1 ;;
+    esac
+}
+
+get_ubuntu_compatible_codename() {
+    local os_release_file="${1:-/etc/os-release}"
+    local os_id
+    os_id=$(get_os_release_value "ID" "$os_release_file" | tr '[:upper:]' '[:lower:]')
+    local version_id
+    version_id=$(get_os_release_value "VERSION_ID" "$os_release_file")
+    local ubuntu_codename
+    ubuntu_codename=$(get_os_release_value "UBUNTU_CODENAME" "$os_release_file")
+    local version_codename
+    version_codename=$(get_os_release_value "VERSION_CODENAME" "$os_release_file")
+
+    case "$os_id" in
+        ubuntu)
+            echo "${version_codename:-$(lsb_release -cs 2>/dev/null)}"
+            ;;
+        linuxmint)
+            if [ -n "$ubuntu_codename" ]; then
+                echo "$ubuntu_codename"
+            else
+                case "$version_id" in
+                    22*) echo "noble" ;;
+                    21*) echo "jammy" ;;
+                    20*) echo "focal" ;;
+                    19*) echo "bionic" ;;
+                    *) echo "noble" ;;
+                esac
+            fi
+            ;;
+        pop|pop-os)
+            case "$version_id" in
+                24.04) echo "noble" ;;
+                22.04) echo "jammy" ;;
+                20.04) echo "focal" ;;
+                *) echo "${ubuntu_codename:-jammy}" ;;
+            esac
+            ;;
+        *)
+            echo "${ubuntu_codename:-${version_codename:-$(lsb_release -cs 2>/dev/null)}}"
+            ;;
+    esac
+}
+
+get_ubuntu_compatible_version() {
+    local os_release_file="${1:-/etc/os-release}"
+    local os_id
+    os_id=$(get_os_release_value "ID" "$os_release_file" | tr '[:upper:]' '[:lower:]')
+    local version_id
+    version_id=$(get_os_release_value "VERSION_ID" "$os_release_file")
+
+    if [ "$os_id" = "ubuntu" ]; then
+        echo "${version_id:-$(lsb_release -rs 2>/dev/null)}"
+        return 0
+    fi
+
+    local codename
+    codename=$(get_ubuntu_compatible_codename "$os_release_file")
+    if ! ubuntu_codename_to_version "$codename"; then
+        return 1
+    fi
+}
+
+get_docker_repository_distro() {
+    local os_release_file="${1:-/etc/os-release}"
+    local os_id
+    os_id=$(get_os_release_value "ID" "$os_release_file" | tr '[:upper:]' '[:lower:]')
+
+    case "$os_id" in
+        ubuntu|linuxmint|pop|pop-os) echo "ubuntu" ;;
+        debian) echo "debian" ;;
+        *) echo "${os_id:-ubuntu}" ;;
+    esac
+}
+
+get_docker_repository_codename() {
+    local os_release_file="${1:-/etc/os-release}"
+    local distro
+    distro=$(get_docker_repository_distro "$os_release_file")
+
+    if [ "$distro" = "ubuntu" ]; then
+        get_ubuntu_compatible_codename "$os_release_file"
+    else
+        get_os_release_value "VERSION_CODENAME" "$os_release_file"
+    fi
+}
+
 # Check if running on supported OS
 check_supported_os() {
     local supported_os=$(get_setting '.system.supported_os')

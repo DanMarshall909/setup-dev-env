@@ -20,13 +20,23 @@ install_docker() {
     install_package "lsb-release" "LSB release"
     
     # Add Docker's official GPG key
+    local docker_distro
+    docker_distro=$(get_docker_repository_distro)
+    local docker_codename
+    docker_codename=$(get_docker_repository_codename)
+    if [ -z "$docker_distro" ] || [ -z "$docker_codename" ]; then
+        print_error "Could not determine Docker repository for this distribution"
+        log_script_end "install-docker.sh" 1
+        return 1
+    fi
+
     print_status "Adding Docker GPG key..."
     sudo mkdir -p /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    curl -fsSL "https://download.docker.com/linux/${docker_distro}/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     
     # Add repository
     print_status "Adding Docker repository..."
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${docker_distro} ${docker_codename} stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     
     # Install Docker Engine
     update_repositories

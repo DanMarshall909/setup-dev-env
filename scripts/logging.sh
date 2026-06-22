@@ -25,7 +25,7 @@ init_logging() {
     log_dir="${log_dir/#\~/$HOME}"
     
     # Create log directory if it doesn't exist
-    mkdir -p "$log_dir"
+    mkdir -p "$log_dir" 2>/dev/null || true
     
     # Set up log file with timestamp
     local timestamp=$(date +"%Y%m%d_%H%M%S")
@@ -44,7 +44,7 @@ init_logging() {
     export SETUP_LOG_CONSOLE="${log_to_console:-true}"
     
     # Create symlink to latest log
-    ln -sf "$log_file" "$log_dir/latest.log"
+    ln -sf "$log_file" "$log_dir/latest.log" 2>/dev/null || true
     
     # Log initialization
     log_info "Logging initialized"
@@ -91,12 +91,12 @@ log_message() {
     
     # Write to log file if available
     if [ -n "$SETUP_LOG_FILE" ]; then
-        echo "$log_entry" >> "$SETUP_LOG_FILE"
+        echo "$log_entry" >> "$SETUP_LOG_FILE" 2>/dev/null || true
     fi
     
     # Also log to syslog if available
     if command -v logger &> /dev/null; then
-        logger -t "setup-dev-env" -p "user.$level" "$message"
+        logger -t "setup-dev-env" -p "user.$level" "$message" 2>/dev/null || true
     fi
 }
 

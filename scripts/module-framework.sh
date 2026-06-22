@@ -58,7 +58,10 @@ handle_already_installed() {
     if "$check_function"; then
         print_warning "$MODULE_DISPLAY_NAME is already installed"
         if [ -n "$verify_function" ]; then
-            "$verify_function"
+            if ! "$verify_function"; then
+                complete_module 1
+                return 1
+            fi
         fi
         complete_module 0
         return 0
@@ -92,7 +95,9 @@ run_standard_install_flow() {
         if "$verify_function"; then
             print_success "$MODULE_DISPLAY_NAME verification completed"
         else
-            print_warning "$MODULE_DISPLAY_NAME installation may have issues"
+            print_error "$MODULE_DISPLAY_NAME verification failed"
+            complete_module 1
+            return 1
         fi
     fi
     

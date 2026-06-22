@@ -24,14 +24,21 @@ install_dotnet() {
     # Download and install Microsoft package repository
     print_status "Adding Microsoft package repository..."
     local temp_deb="packages-microsoft-prod.deb"
-    local ubuntu_version=$(lsb_release -rs)
+    local ubuntu_version
+    ubuntu_version=$(get_ubuntu_compatible_version)
+    if [ -z "$ubuntu_version" ]; then
+        print_error "Could not determine Ubuntu-compatible version for Microsoft package repository"
+        return 1
+    fi
     local repo_url="https://packages.microsoft.com/config/ubuntu/${ubuntu_version}/packages-microsoft-prod.deb"
     
-    download_and_install "$repo_url" "$temp_deb" "sudo dpkg -i" "Microsoft package repository"
+    if ! download_and_install "$repo_url" "$temp_deb" "sudo dpkg -i" "Microsoft package repository"; then
+        return 1
+    fi
     
     # Update package list and install .NET SDK
-    update_repositories
-    install_package_with_dry_run "dotnet-sdk-8.0" ".NET 8 SDK"
+    update_repositories || return 1
+    install_package_with_dry_run "dotnet-sdk-8.0" ".NET 8 SDK" || return 1
     
     return 0
 }

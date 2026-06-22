@@ -93,18 +93,14 @@ install_docker_with_official_repo() {
     print_status "Trying official Docker repository..."
     
     # Detect distribution for Docker repository
-    local distro=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
-    local codename=$(lsb_release -cs)
-    
-    # Pop!_OS is based on Ubuntu, use Ubuntu repos
-    if [[ "$distro" == "pop" ]]; then
-        distro="ubuntu"
-        # Map Pop!_OS version to Ubuntu codename
-        case "$(lsb_release -rs)" in
-            "22.04") codename="jammy" ;;
-            "20.04") codename="focal" ;;
-            *) codename="jammy" ;; # Default to latest LTS
-        esac
+    local distro
+    distro=$(get_docker_repository_distro)
+    local codename
+    codename=$(get_docker_repository_codename)
+
+    if [ -z "$distro" ] || [ -z "$codename" ]; then
+        print_error "Could not determine Docker repository for this distribution"
+        return 1
     fi
     
     # Add Docker repository

@@ -6,23 +6,47 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "$SCRIPT_DIR/../../scripts/common.sh"
 
+CORE_EXTENSIONS=(
+    "ms-dotnettools.csharp"
+    "esbenp.prettier-vscode"
+    "ms-vscode.eslint"
+    "eamodio.gitlens"
+    "ms-vscode-remote.remote-ssh"
+    "ms-azuretools.vscode-docker"
+)
+
+missing_vscode_extensions() {
+    local extension
+    if ! command -v code &>/dev/null; then
+        printf '%s\n' "${CORE_EXTENSIONS[@]}"
+        return
+    fi
+
+    local installed_extensions
+    installed_extensions=$(code --list-extensions 2>/dev/null || true)
+    for extension in "${CORE_EXTENSIONS[@]}"; do
+        if ! echo "$installed_extensions" | grep -q "^$extension$"; then
+            echo "$extension"
+        fi
+    done
+}
+
 check_vscode_status() {
     local command="$1"
     
     case "$command" in
         "installed")
-            # Return 0 if installed, 1 if not
-            if command -v code &>/dev/null; then
-                return 0
-            else
-                return 1
-            fi
+            command -v code &>/dev/null && [ -z "$(missing_vscode_extensions)" ]
             ;;
         "summary")
             # Short status for module listing
             if command -v code &>/dev/null; then
                 local version=$(code --version 2>/dev/null | head -n1)
-                if [ -n "$version" ]; then
+                local missing
+                missing=$(missing_vscode_extensions | tr '\n' ' ')
+                if [ -n "$missing" ]; then
+                    echo "❌ VS Code $version missing extensions: $missing"
+                elif [ -n "$version" ]; then
                     echo "✅ VS Code $version"
                 else
                     echo "✅ VS Code (installed)"
@@ -61,23 +85,23 @@ check_vscode_status() {
             fi
             
             # Check for specific extensions we install
-            local core_extensions=(
-                "ms-dotnettools.csharp"
-                "esbenp.prettier-vscode"
-                "ms-vscode.eslint"
-                "eamodio.gitlens"
-                "ms-vscode-remote.remote-ssh"
-                "ms-azuretools.vscode-docker"
-            )
-            
+            local missing_extensions_json="[]"
+            local core_extensions_ok=true
             local extensions_status="{}"
-            for ext in "${core_extensions[@]}"; do
+            for ext in "${CORE_EXTENSIONS[@]}"; do
                 local ext_installed=false
                 if [ "$installed" = "true" ] && code --list-extensions 2>/dev/null | grep -q "^$ext$"; then
                     ext_installed=true
+                else
+                    core_extensions_ok=false
+                    missing_extensions_json=$(echo "$missing_extensions_json" | jq --arg ext "$ext" '. + [$ext]')
                 fi
                 extensions_status=$(echo "$extensions_status" | jq --arg ext "$ext" --argjson status "$ext_installed" '.[$ext] = $status')
             done
+
+            if [ "$installed" = "true" ] && [ "$core_extensions_ok" != "true" ]; then
+                installed=false
+            fi
             
             cat << EOF
 {
@@ -88,7 +112,8 @@ check_vscode_status() {
   "config_directory": "$config_dir",
   "extensions_count": $extensions_count,
   "extensions": $extensions_json,
-  "core_extensions_status": $extensions_status
+  "core_extensions_status": $extensions_status,
+  "missing_core_extensions": $missing_extensions_json
 }
 EOF
             ;;

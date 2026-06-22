@@ -6,18 +6,28 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "$SCRIPT_DIR/../../scripts/common.sh"
 
+get_claude_command() {
+    if command_exists claude; then
+        echo "claude"
+    elif command_exists claude-code; then
+        echo "claude-code"
+    fi
+}
+
 # Check if Claude Code module is installed and return detailed status
 check_claude_status() {
     local status="{}"
     
     # Check if Claude Code CLI is installed
-    if command_exists claude-code; then
-        local claude_version=$(claude-code --version 2>/dev/null | head -n1)
-        status=$(echo "$status" | jq --arg v "$claude_version" '.claude_code.installed = true | .claude_code.version = $v')
+    local claude_command
+    claude_command=$(get_claude_command)
+    if [ -n "$claude_command" ]; then
+        local claude_version=$("$claude_command" --version 2>/dev/null | head -n1)
+        status=$(echo "$status" | jq --arg v "$claude_version" --arg command "$claude_command" '.claude_code.installed = true | .claude_code.version = $v | .claude_code.command = $command | .claude_code.in_path = true')
         
         # Check authentication status
-        if claude-code auth status &>/dev/null; then
-            local auth_info=$(claude-code auth status 2>/dev/null || echo "authenticated")
+        if "$claude_command" auth status &>/dev/null; then
+            local auth_info=$("$claude_command" auth status 2>/dev/null || echo "authenticated")
             status=$(echo "$status" | jq --arg auth "$auth_info" '.claude_code.authenticated = true | .claude_code.auth_info = $auth')
         else
             status=$(echo "$status" | jq '.claude_code.authenticated = false | .claude_code.auth_info = null')
@@ -37,8 +47,8 @@ check_claude_status() {
         fi
     else
         # Check if installed via npm but not in PATH
-        if npm list -g @anthropic/claude-code >/dev/null 2>&1; then
-            local npm_version=$(npm list -g @anthropic/claude-code 2>/dev/null | grep @anthropic/claude-code | sed 's/.*@//')
+        if npm list -g @anthropic-ai/claude-code >/dev/null 2>&1; then
+            local npm_version=$(npm list -g @anthropic-ai/claude-code 2>/dev/null | grep @anthropic-ai/claude-code | sed 's/.*@//')
             status=$(echo "$status" | jq --arg v "$npm_version" '
                 .claude_code.installed = true |
                 .claude_code.version = $v |
@@ -87,7 +97,7 @@ check_claude_status() {
 
 # Return simple boolean for basic check
 is_claude_installed() {
-    (command_exists claude-code || npm list -g @anthropic/claude-code >/dev/null 2>&1) && 
+    ([ -n "$(get_claude_command)" ] || npm list -g @anthropic-ai/claude-code >/dev/null 2>&1) &&
     command_exists node
 }
 

@@ -6,6 +6,13 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "$SCRIPT_DIR/../../scripts/common.sh"
 
+if command_exists npm; then
+    npm_prefix=$(npm config get prefix 2>/dev/null || true)
+    if [ -n "$npm_prefix" ] && [ -d "$npm_prefix/bin" ]; then
+        export PATH="$npm_prefix/bin:$PATH"
+    fi
+fi
+
 # Check if Node.js module is installed and return detailed status
 check_node_status() {
     local status="{}"
@@ -42,7 +49,7 @@ check_node_status() {
             .npm.registry = $registry')
         
         # Test npm connectivity
-        if npm ping &>/dev/null; then
+        if timeout 20 npm ping &>/dev/null; then
             status=$(echo "$status" | jq '.npm.connectivity = true')
         else
             status=$(echo "$status" | jq '.npm.connectivity = false')

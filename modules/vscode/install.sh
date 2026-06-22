@@ -13,20 +13,20 @@ install_vscode_module() {
     # Check if already installed
     if check_vscode_installed; then
         print_warning "VS Code is already installed"
-        verify_vscode_installation
-        install_vscode_extensions
+        verify_vscode_installation || { log_script_end "vscode/install.sh" 1; return 1; }
+        install_vscode_extensions || { log_script_end "vscode/install.sh" 1; return 1; }
         log_script_end "vscode/install.sh" 0
         return 0
     fi
     
     # Install VS Code
-    install_vscode_editor
+    install_vscode_editor || { log_script_end "vscode/install.sh" 1; return 1; }
     
     # Verify installation
-    verify_vscode_installation
+    verify_vscode_installation || { log_script_end "vscode/install.sh" 1; return 1; }
     
     # Install extensions
-    install_vscode_extensions
+    install_vscode_extensions || { log_script_end "vscode/install.sh" 1; return 1; }
     
     # Show post-installation info
     show_vscode_info
@@ -158,6 +158,7 @@ install_vscode_extensions() {
     )
     
     # Install each extension
+    local failed_extensions=()
     for extension in "${extensions[@]}"; do
         print_status "Installing extension: $extension"
         
@@ -172,8 +173,14 @@ install_vscode_extensions() {
             print_success "Extension $extension installed successfully"
         else
             print_warning "Failed to install extension: $extension (timeout or error)"
+            failed_extensions+=("$extension")
         fi
     done
+
+    if [ ${#failed_extensions[@]} -gt 0 ]; then
+        print_error "Some VS Code extensions failed to install: ${failed_extensions[*]}"
+        return 1
+    fi
     
     print_success "VS Code extensions installation completed"
 }

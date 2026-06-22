@@ -13,7 +13,7 @@
   "get_version": "node --version && npm --version && tsc --version 2>/dev/null || echo 'TypeScript not installed'",
   "size_estimate": "200MB",
   "install_time_estimate": "3-5 minutes",
-  "recommended_version": "18.x LTS",
+  "recommended_version": "Latest LTS",
   "post_install_actions": [
     "Configure npm registry",
     "Install global TypeScript tools",

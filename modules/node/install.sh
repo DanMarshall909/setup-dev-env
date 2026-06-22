@@ -11,42 +11,53 @@ install_node_module() {
     log_script_start "node/install.sh"
     
     # Install Node.js using NodeSource repository for latest LTS
-    install_nodejs
+    install_nodejs || { log_script_end "node/install.sh" 1; return 1; }
     
     # Configure npm (must be done before installing global packages)
-    configure_npm
+    configure_npm || { log_script_end "node/install.sh" 1; return 1; }
     
     # Install global TypeScript tools
-    install_typescript_tools
+    install_typescript_tools || { log_script_end "node/install.sh" 1; return 1; }
     
     # Verify installation
-    verify_nodejs_installation
+    verify_nodejs_installation || { log_script_end "node/install.sh" 1; return 1; }
     
     log_script_end "node/install.sh" 0
 }
 
 install_nodejs() {
     print_status "Installing Node.js..."
-    
-    if command_exists node; then
-        local current_version=$(node --version)
-        print_warning "Node.js already installed: $current_version"
-        return 0
-    fi
-    
+
     if is_dry_run; then
-        print_would_execute "curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -"
+        print_would_execute "sudo apt purge -y nodejs"
+        print_would_execute "sudo rm -f /etc/apt/sources.list.d/nodesource*.list /usr/share/keyrings/nodesource.gpg"
+        print_would_execute "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -"
         print_would_install "nodejs" "Node.js"
         print_would_execute "node --version && npm --version"
         return 0
     fi
-    
-    # Install Node.js 18.x LTS from NodeSource
+
+    if command_exists node; then
+        local current_version=$(node --version)
+        print_warning "Node.js already available on PATH: $current_version"
+    fi
+
+    # Remove old apt-installed Node.js and stale NodeSource release repositories.
+    if dpkg -l nodejs 2>/dev/null | awk '$1 == "ii" && $3 ~ /nodesource/ { found=1 } END { exit !found }'; then
+        local apt_node_version
+        apt_node_version=$(dpkg -l nodejs | awk '$1 == "ii" { print $3; exit }')
+        print_status "Removing old NodeSource apt package: nodejs $apt_node_version"
+        sudo apt purge -y nodejs
+    fi
+
+    sudo rm -f /etc/apt/sources.list.d/nodesource*.list /usr/share/keyrings/nodesource.gpg
+
+    # Install the current Node.js LTS from NodeSource.
     print_status "Adding NodeSource repository..."
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
     
     # Install Node.js
-    install_package "nodejs" "Node.js"
+    install_or_upgrade_package "nodejs" "Node.js"
     
     # Verify installation
     print_success "Node.js installed:"
@@ -85,6 +96,7 @@ install_typescript_tools() {
                 else
                     print_error "Failed to install: $package"
                     log_package_operation "install" "$package" "failed"
+                    return 1
                 fi
             fi
         done <<< "$packages"
@@ -94,7 +106,8 @@ install_typescript_tools() {
         if npm install -g typescript ts-node nodemon prettier eslint @types/node; then
             print_success "Default TypeScript tools installed"
         else
-            print_warning "Some TypeScript tools may have failed to install"
+            print_error "Some TypeScript tools failed to install"
+            return 1
         fi
     fi
 }
@@ -218,7 +231,7 @@ verify_nodejs_installation() {
     fi
     
     # Test npm connectivity
-    if npm ping &>/dev/null; then
+    if timeout 20 npm ping &>/dev/null; then
         print_success "npm registry connectivity: OK"
     else
         print_warning "npm registry connectivity: Failed (check internet connection)"

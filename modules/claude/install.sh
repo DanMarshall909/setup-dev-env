@@ -12,16 +12,16 @@ install_claude_module() {
     log_script_start "claude/install.sh"
     
     # Verify Node.js is available (dependency check)
-    verify_nodejs_dependency
+    verify_nodejs_dependency || { log_script_end "claude/install.sh" 1; return 1; }
     
     # Install Claude Code CLI
-    install_claude_code_cli
+    install_claude_code_cli || { log_script_end "claude/install.sh" 1; return 1; }
     
     # Configure Claude Code
-    configure_claude_code
+    configure_claude_code || { log_script_end "claude/install.sh" 1; return 1; }
     
     # Verify installation
-    verify_claude_installation
+    verify_claude_installation || { log_script_end "claude/install.sh" 1; return 1; }
     
     log_script_end "claude/install.sh" 0
 }
@@ -66,14 +66,16 @@ install_claude_code_cli() {
     print_status "Installing Claude Code CLI..."
     
     # Check if already installed
-    if command_exists claude-code; then
-        local current_version=$(claude-code --version 2>/dev/null | head -n1)
+    local existing_command
+    existing_command=$(get_claude_command)
+    if [ -n "$existing_command" ]; then
+        local current_version=$("$existing_command" --version 2>/dev/null | head -n1)
         print_warning "Claude Code CLI already installed: $current_version"
         return 0
     fi
     
     # Check if installed via npm
-    if npm list -g @anthropic/claude-code >/dev/null 2>&1; then
+    if npm list -g @anthropic-ai/claude-code >/dev/null 2>&1; then
         print_warning "Claude Code CLI already installed via npm"
         return 0
     fi
@@ -90,24 +92,24 @@ install_claude_code_cli() {
         log_package_operation "install" "@anthropic-ai/claude-code" "global"
         
         # Create symlink if needed
-        if [ -f ~/.npm-global/bin/claude-code ] && [ ! -f /usr/local/bin/claude-code ]; then
-            sudo ln -sf ~/.npm-global/bin/claude-code /usr/local/bin/claude-code 2>/dev/null || true
+        if [ -f ~/.npm-global/bin/claude ] && [ ! -f /usr/local/bin/claude ]; then
+            sudo ln -sf ~/.npm-global/bin/claude /usr/local/bin/claude 2>/dev/null || true
         fi
     else
         print_error "Failed to install Claude Code CLI"
-        log_package_operation "install" "@anthropic/claude-code" "failed"
+        log_package_operation "install" "@anthropic-ai/claude-code" "failed"
         
         # Try alternative installation method
         print_status "Trying alternative installation method..."
         if timeout 30 npx @anthropic-ai/claude-code --version &>/dev/null; then
             print_success "Claude Code available via npx"
             # Create wrapper script
-            cat > ~/.local/bin/claude-code << 'EOF'
+            cat > ~/.local/bin/claude << 'EOF'
 #!/bin/bash
 exec npx @anthropic-ai/claude-code "$@"
 EOF
-            chmod +x ~/.local/bin/claude-code
-            print_success "Created claude-code wrapper script"
+            chmod +x ~/.local/bin/claude
+            print_success "Created claude wrapper script"
         else
             print_warning "npx method also failed - Claude Code CLI not available"
             print_status "You can install manually with: npm install -g @anthropic-ai/claude-code"
@@ -135,9 +137,11 @@ configure_claude_code() {
         print_status "Configuring API key from password manager..."
         
         # Configure API key
-        claude-code auth login --api-key "$api_key" || {
+        local claude_command
+        claude_command=$(get_claude_command)
+        "$claude_command" auth login --api-key "$api_key" || {
             print_warning "Failed to configure API key automatically"
-            print_status "You can configure it manually with: claude-code auth login"
+            print_status "You can configure it manually with: $claude_command auth login"
         }
         
         log_config_change "claude" "api_key" "" "<masked>"
@@ -190,8 +194,10 @@ verify_claude_installation() {
     print_status "Verifying Claude Code installation..."
     
     # Test Claude Code CLI
-    if command_exists claude-code; then
-        local claude_version=$(claude-code --version 2>/dev/null | head -n1)
+    local claude_command
+    claude_command=$(get_claude_command)
+    if [ -n "$claude_command" ]; then
+        local claude_version=$("$claude_command" --version 2>/dev/null | head -n1)
         print_success "Claude Code CLI: $claude_version"
     else
         print_error "Claude Code CLI verification failed"
@@ -199,18 +205,26 @@ verify_claude_installation() {
     fi
     
     # Test authentication status
-    if claude-code auth status &>/dev/null; then
+    if "$claude_command" auth status &>/dev/null; then
         print_success "Claude Code authentication: OK"
     else
         print_warning "Claude Code authentication: Not configured"
-        print_status "Run 'claude-code auth login' to authenticate"
+        print_status "Run '$claude_command auth login' to authenticate"
     fi
     
     # Test basic functionality
-    if claude-code --help &>/dev/null; then
+    if "$claude_command" --help &>/dev/null; then
         print_success "Claude Code functionality: OK"
     else
         print_warning "Claude Code basic functionality check failed"
+    fi
+}
+
+get_claude_command() {
+    if command_exists claude; then
+        echo "claude"
+    elif command_exists claude-code; then
+        echo "claude-code"
     fi
 }
 

@@ -34,9 +34,11 @@ install_dotnet() {
     fi
     rm -f "$temp_deb"
     
-    # Update and install
+    # Update and install the newest SDK package available in Microsoft's repo
     update_repositories || { log_script_end "install-dotnet.sh" 1; return 1; }
-    install_package "dotnet-sdk-8.0" ".NET 8 SDK" || { log_script_end "install-dotnet.sh" 1; return 1; }
+    local dotnet_sdk_package
+    dotnet_sdk_package=$(get_latest_dotnet_sdk_package) || { log_script_end "install-dotnet.sh" 1; return 1; }
+    install_or_upgrade_package "$dotnet_sdk_package" "latest .NET SDK ($dotnet_sdk_package)" || { log_script_end "install-dotnet.sh" 1; return 1; }
     
     # Show version
     print_success ".NET SDK installation complete:"

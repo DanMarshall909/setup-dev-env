@@ -19,10 +19,10 @@ install_rider_module() {
     fi
     
     # Install Rider
-    install_rider_ide
+    install_rider_ide || { log_script_end "rider/install.sh" 1; return 1; }
     
     # Verify installation
-    verify_rider_installation
+    verify_rider_installation || { log_script_end "rider/install.sh" 1; return 1; }
     
     # Show post-installation info
     show_rider_info
@@ -53,15 +53,16 @@ install_rider_ide() {
         return 0
     fi
     
-    # Try Toolbox first (more reliable)
-    print_status "Attempting JetBrains Toolbox installation (primary method)..."
-    if install_rider_toolbox_method; then
+    # Snap installs Rider directly and is idempotent when rerun.
+    print_status "Attempting JetBrains Rider snap installation..."
+    if install_rider_snap_method; then
         return 0
     fi
     
-    # Fallback to snap if Toolbox fails
-    print_warning "Toolbox installation failed, trying snap as fallback..."
-    install_rider_snap_method
+    # Fallback to Toolbox so the user has a supported manual install path.
+    print_warning "Snap installation failed, trying JetBrains Toolbox as fallback..."
+    install_rider_toolbox_method
+    return 1
 }
 
 install_rider_snap_method() {

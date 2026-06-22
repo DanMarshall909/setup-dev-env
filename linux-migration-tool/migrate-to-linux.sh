@@ -145,9 +145,15 @@ install_languages() {
     sudo dpkg -i packages-microsoft-prod.deb
     rm packages-microsoft-prod.deb
     
-    # Install .NET SDKs
+    # Install the newest .NET SDK available in Microsoft's repo
     sudo apt update
-    sudo apt install -y dotnet-sdk-6.0 dotnet-sdk-7.0 dotnet-sdk-8.0 dotnet-sdk-9.0
+    local latest_dotnet_sdk
+    latest_dotnet_sdk=$(apt-cache search --names-only '^dotnet-sdk-[0-9]+\.[0-9]+$' | awk '{print $1}' | sort -t- -k3,3V | tail -n1)
+    if [ -z "$latest_dotnet_sdk" ]; then
+        log_error "Could not find any dotnet-sdk packages in the configured repositories"
+        return 1
+    fi
+    sudo apt install -y "$latest_dotnet_sdk"
     
     # Java
     log "Installing Java (OpenJDK)..."

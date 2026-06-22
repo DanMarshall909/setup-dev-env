@@ -30,16 +30,14 @@ ESSENTIAL_PACKAGES=(
 
 # Check if essential tools are installed
 check_essentials_installed() {
-    # Check if most essential packages are installed
-    local missing=0
+    local package
     for package in "${ESSENTIAL_PACKAGES[@]}"; do
         if ! dpkg -l | grep -q "^ii  $package "; then
-            missing=$((missing + 1))
+            return 1
         fi
     done
-    
-    # Consider installed if less than 3 packages are missing
-    [ $missing -lt 3 ]
+
+    return 0
 }
 
 # Install essential tools - reusing logic from migration script
@@ -108,7 +106,7 @@ verify_essentials_installation() {
     verify_command_available "wget" "wget"
     verify_command_available "jq" "jq"
     
-    return 0
+    [ "$verified" -eq "$total" ]
 }
 
 # Show essential tools post-installation info

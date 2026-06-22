@@ -44,8 +44,7 @@ check_dev_tools_installed() {
         esac
     done
     
-    # Consider installed if more than half are present
-    [ $installed_count -gt $((total_count / 2)) ]
+    [ "$installed_count" -eq "$total_count" ]
 }
 
 # Install the module
@@ -241,7 +240,7 @@ verify_dev_tools_installation() {
         tldr --update 2>/dev/null || true
     fi
     
-    return 0
+    [ "$verified" -eq "$total" ]
 }
 
 # Show post-installation information

@@ -6,9 +6,9 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "$SCRIPT_DIR/../../scripts/module-framework.sh"
 
-# Check if .NET is already installed
-check_dotnet_installed() {
-    command -v dotnet &>/dev/null
+# Always run the installer so apt can install newer SDK feature bands over time.
+check_dotnet_current() {
+    return 1
 }
 
 # Install .NET SDK - reusing logic from scripts/install-dotnet.sh
@@ -16,7 +16,8 @@ install_dotnet() {
     if is_dry_run; then
         print_would_execute "wget Microsoft package configuration"
         print_would_execute "dpkg -i packages-microsoft-prod.deb"
-        print_would_install "dotnet-sdk-8.0" ".NET 8 SDK"
+        print_would_execute "apt-cache search --names-only '^dotnet-sdk-[0-9]+\\.[0-9]+$'"
+        print_would_install "latest dotnet-sdk-* package" "latest .NET SDK"
         print_would_execute "dotnet --version"
         return 0
     fi
@@ -36,9 +37,11 @@ install_dotnet() {
         return 1
     fi
     
-    # Update package list and install .NET SDK
+    # Update package list and install the newest SDK package available in Microsoft's repo
     update_repositories || return 1
-    install_package_with_dry_run "dotnet-sdk-8.0" ".NET 8 SDK" || return 1
+    local dotnet_sdk_package
+    dotnet_sdk_package=$(get_latest_dotnet_sdk_package) || return 1
+    install_or_upgrade_package "$dotnet_sdk_package" "latest .NET SDK ($dotnet_sdk_package)" || return 1
     
     return 0
 }
@@ -85,7 +88,7 @@ install_dotnet_module() {
     init_module "dotnet" ".NET SDK"
     
     run_standard_install_flow \
-        "check_dotnet_installed" \
+        "check_dotnet_current" \
         "install_dotnet" \
         "verify_dotnet_installation" \
         "show_dotnet_info"

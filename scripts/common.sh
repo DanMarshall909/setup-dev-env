@@ -345,6 +345,53 @@ install_package() {
     log_function_end "install_package" 0
 }
 
+get_latest_dotnet_sdk_package() {
+    local latest_package
+
+    latest_package=$(apt-cache search --names-only '^dotnet-sdk-[0-9]+\.[0-9]+$' \
+        | awk '{print $1}' \
+        | sort -t- -k3,3V \
+        | tail -n1)
+
+    if [ -z "$latest_package" ]; then
+        print_error "Could not find any dotnet-sdk packages in the configured repositories"
+        return 1
+    fi
+
+    echo "$latest_package"
+}
+
+install_or_upgrade_package() {
+    local package=$1
+    local package_name=${2:-$package}
+    local package_manager=$(get_setting '.system.package_manager')
+
+    log_function_start "install_or_upgrade_package" "$package" "$package_name"
+
+    if is_dry_run; then
+        print_would_install "$package" "$package_name"
+        print_would_execute "run_sudo $package_manager install -y $package"
+        log_package_operation "dry-run" "$package" "simulated"
+        log_function_end "install_or_upgrade_package" 0
+        return 0
+    fi
+
+    print_status "Installing or upgrading $package_name..."
+    if run_sudo $package_manager install -y "$package"; then
+        print_success "$package_name is installed and up to date"
+        local version
+        version=$(dpkg -l | awk -v pkg="$package" '$1 == "ii" && $2 == pkg {print $3; exit}')
+        log_package_operation "install-or-upgrade" "$package" "${version:-installed}"
+    else
+        print_error "Failed to install or upgrade $package_name"
+        log_package_operation "install-or-upgrade" "$package" "failed"
+        log_function_end "install_or_upgrade_package" 1
+        return 1
+    fi
+
+    log_function_end "install_or_upgrade_package" 0
+}
+
 # Get package info from settings
 get_package_info() {
     local package_key=$1

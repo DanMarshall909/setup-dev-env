@@ -11,6 +11,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # Source common functions and module manager
 source "$SCRIPT_DIR/scripts/common.sh"
 source "$SCRIPT_DIR/scripts/setup-logger.sh"
+source "$SCRIPT_DIR/scripts/prerequisites.sh"
 source "$SCRIPT_DIR/scripts/module-manager.sh"
 
 # Initialize comprehensive logging
@@ -175,6 +176,29 @@ main() {
         esac
     done
     
+    local command="${1:-}"
+    local should_check_prereqs=false
+    case "$command" in
+        ""|"all")
+            should_check_prereqs=true
+            ;;
+        "list"|"available"|"info"|"tree"|"help"|"--help"|"-h")
+            should_check_prereqs=false
+            ;;
+        "--dry-run"|"-d")
+            should_check_prereqs=true
+            ;;
+        *)
+            if module_exists "$command"; then
+                should_check_prereqs=true
+            fi
+            ;;
+    esac
+
+    if [ "$should_check_prereqs" = "true" ]; then
+        run_prerequisite_check "$DRY_RUN"
+    fi
+
     # Parse command line arguments
     case "${1:-}" in
         # Module management commands

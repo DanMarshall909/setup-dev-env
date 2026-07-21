@@ -1,0 +1,46 @@
+{
+  "_comment": "Config for setup-windows.ps1 - Windows equivalents of the Linux dev-env modules. Edit values here rather than the script.",
+  "git": {
+    "user": {
+      "name": "Dan Marshall",
+      "email": "dan.marshall@rapidcircle.com"
+    },
+    "init": { "defaultBranch": "main" },
+    "pull": { "rebase": false },
+    "core": { "autocrlf": true }
+  },
+  "cliTools": [
+    { "id": "BurntSushi.ripgrep.MSVC", "name": "ripgrep (rg)" },
+    { "id": "sharkdp.fd",             "name": "fd" },
+    { "id": "sharkdp.bat",            "name": "bat" },
+    { "id": "junegunn.fzf",           "name": "fzf" },
+    { "id": "MikeFarah.yq",           "name": "yq" },
+    { "id": "jqlang.jq",              "name": "jq" },
+    { "id": "muesli.duf",             "name": "duf" },
+    { "id": "HTTPie.HTTPie",          "name": "HTTPie (desktop app; CLI http needs 'pip install httpie')" },
+    { "id": "dbrgn.tealdeer",         "name": "tldr (tealdeer)" },
+    { "id": "dundee.gdu",             "name": "gdu (ncdu equivalent)" },
+    { "id": "7zip.7zip",              "name": "7-Zip" },
+    { "id": "vim.vim",                "name": "Vim" },
+    { "id": "Git.Git",                "name": "Git" },
+    { "id": "GitHub.cli",             "name": "GitHub CLI (gh)" },
+    { "id": "Microsoft.VisualStudioCode", "name": "Visual Studio Code" }
+  ],
+  "node": {
+    "id": "OpenJS.NodeJS.LTS",
+    "globalPackages": [
+      "typescript",
+      "ts-node",
+      "nodemon",
+      "prettier",
+      "eslint",
+      "@types/node"
+    ]
+  },
+  "dotnet": { "id": "Microsoft.DotNet.SDK.10", "name": ".NET SDK 10" },
+  "heavy": [
+    { "id": "Docker.DockerDesktop",                 "name": "Docker Desktop", "note": "Needs WSL2/virtualization; may require a reboot before 'docker' runs." },
+    { "id": "JetBrains.Rider",                      "name": "JetBrains Rider", "note": "Requires a JetBrains account/license to use." },
+    { "id": "Microsoft.VisualStudio.2022.Enterprise", "name": "Visual Studio Enterprise 2022", "note": "Core IDE only; pick workloads later in the VS installer." }
+  ]
+}
